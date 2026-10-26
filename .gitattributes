@@ -1,0 +1,2 @@
+# o cmd se perde nas linhas com ^ quando o .bat vem com LF
+*.bat text eol=crlf
