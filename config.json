@@ -1,0 +1,21 @@
+{
+  "port": 8443,
+  "setup_port": 8080,
+
+  "ptt_key": "leftctrl",
+  "ptt_deadman_ms": 700,
+
+  "sim_enabled": true,
+  "sim_poll_hz": 5,
+
+  "audio_enabled": true,
+  "audio_process": ["ivao", "altitude"],
+  "squelch_open": 0.03,
+  "squelch_close": 0.01,
+  "squelch_hang_ms": 350,
+
+  "whazzup_enabled": true,
+  "whazzup_interval_s": 15,
+  "whazzup_radius_nm": 250,
+  "whazzup_max_stations": 12
+}

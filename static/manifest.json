@@ -1,0 +1,13 @@
+{
+  "name": "COM Radio",
+  "short_name": "COM",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0D0E",
+  "theme_color": "#0A0D0E",
+  "start_url": "/",
+  "icons": [
+    { "src": "/static/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

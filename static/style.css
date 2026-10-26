@@ -1,0 +1,339 @@
+:root {
+  --void: #0A0D0E;
+  --face: #141A1C;
+  --face-hi: #1D2528;
+  --bezel: #293134;
+  --legend: #7F8D93;
+  --amber: #FFA524;
+  --amber-dim: #96601A;
+  --phosphor: #62E39B;
+  --tx: #FF4B2B;
+  --frame: var(--bezel);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--void);
+  color: #E4EAEC;
+  font-family: "B612", system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.annunciator {
+  position: fixed;
+  inset: 0;
+  border: 5px solid var(--frame);
+  pointer-events: none;
+  z-index: 10;
+  transition: border-color 60ms linear;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 12px);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.ident { display: flex; align-items: center; gap: 8px; }
+
+.lamp {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--tx);
+  transition: background 120ms linear;
+}
+.lamp.on { background: var(--phosphor); }
+
+time {
+  font-family: "B612 Mono", ui-monospace, monospace;
+  font-size: 14px;
+  color: var(--legend);
+}
+
+.radio {
+  background: var(--face);
+  border: 1px solid var(--bezel);
+  border-top: 2px solid var(--frame);
+  padding: 12px 14px 10px;
+  transition: border-top-color 60ms linear;
+}
+
+.stack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(6px, 2.4vw, 12px);
+}
+
+.slot { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.slot.right { align-items: flex-end; }
+
+.legend {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--legend);
+}
+
+.freq {
+  font-family: "B612 Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  /* as duas frequencias mais o botao de troca precisam caber num iPhone de
+     320 px sem cortar o standby, entao o corpo acompanha a largura da tela */
+  font-size: clamp(17px, 5.6vw, 24px);
+  color: var(--amber-dim);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.freq.big {
+  font-size: clamp(29px, 9.6vw, 40px);
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: -0.01em;
+}
+
+.swap {
+  width: clamp(40px, 11vw, 46px);
+  height: clamp(40px, 11vw, 46px);
+  flex: none;
+  background: var(--face-hi);
+  border: 1px solid var(--bezel);
+  color: var(--legend);
+  display: grid;
+  place-items: center;
+}
+.swap:active { background: var(--bezel); color: var(--amber); }
+
+.pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pill {
+  font-family: "B612 Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  background: var(--face-hi);
+  color: #5D686C;
+}
+.pill.rx { background: var(--phosphor); color: #062012; }
+.pill.tx { background: var(--tx); color: #2A0800; }
+
+.spacer { flex: 1; }
+
+.ghost {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--bezel);
+  color: var(--legend);
+}
+.ghost:active { background: var(--face-hi); }
+
+.pad {
+  background: var(--face);
+  border: 1px solid var(--bezel);
+  padding: 10px;
+}
+
+.padval {
+  font-family: "B612 Mono", ui-monospace, monospace;
+  font-size: 26px;
+  text-align: center;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.paderr {
+  font-size: 12px;
+  color: var(--tx);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.keys button {
+  font-family: "B612 Mono", ui-monospace, monospace;
+  font-size: 20px;
+  padding: 13px 0;
+  background: var(--face-hi);
+  border: 1px solid var(--bezel);
+  color: #E4EAEC;
+}
+.keys button.word { font-family: "B612", sans-serif; font-size: 13px; }
+.keys button:active { background: var(--bezel); }
+
+.ptt {
+  flex: 1;
+  min-height: 150px;
+  width: 100%;
+  background: var(--face);
+  border: 2px solid var(--bezel);
+  color: var(--legend);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  touch-action: none;
+  transition: background 50ms linear, color 50ms linear, border-color 50ms linear;
+}
+
+.ptt-label { font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; }
+.ptt-sub { font-size: 13px; opacity: 0.65; }
+
+.ptt.rx { background: var(--phosphor); border-color: var(--phosphor); color: #062012; }
+.ptt.tx { background: var(--tx); border-color: var(--tx); color: #2A0800; }
+.ptt.off { opacity: 0.35; }
+
+.atc { display: flex; flex-direction: column; min-height: 0; flex: 1.1; }
+
+.atc-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px 6px;
+}
+
+.atc-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--bezel);
+  background: var(--face);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--bezel);
+  color: #E4EAEC;
+  font-family: inherit;
+  text-align: left;
+}
+.row:first-child { border-top: 0; }
+.row:active { background: var(--face-hi); }
+
+.row .cs { flex: 1; min-width: 0; }
+.row .cs b { font-weight: 400; font-size: 15px; display: block; }
+.row .cs small { font-size: 11px; color: var(--legend); }
+
+.row .rf {
+  font-family: "B612 Mono", ui-monospace, monospace;
+  font-size: 16px;
+  color: var(--amber-dim);
+}
+
+.empty, .error {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--legend);
+  text-align: center;
+}
+.error { color: var(--tx); }
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #5D686C;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* aviso de servico fora do ar: SimConnect, audio ou Whazzup */
+.alert {
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 8px 11px;
+  background: #2A1310;
+  border-left: 3px solid var(--tx);
+  color: #F3C8BF;
+}
+
+/* nivel do audio que chega do Altitude. Serve para conferir o roteamento
+   do VB-Cable sem levantar do assento e olhar o PC. */
+.meter {
+  height: 3px;
+  margin-top: 8px;
+  background: var(--face-hi);
+  overflow: hidden;
+}
+.meter span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--phosphor);
+  transition: width 80ms linear;
+}
+
+footer span + span { text-align: right; }
+footer span:nth-child(2) { text-align: center; flex: 1; }
+
+/* tela de espera: cobre tudo enquanto o WebSocket nao conecta */
+.waiting {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  background: var(--void);
+  text-align: center;
+}
+.waiting[hidden] { display: none; }
+.waiting h1 {
+  font: 700 clamp(24px, 7vw, 30px) "B612 Mono", monospace;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+}
+.waiting p { color: var(--legend); font-size: 15px; line-height: 1.5; }
+.wait-lamp {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 18px var(--amber);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.25; box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .wait-lamp { animation: none; } }

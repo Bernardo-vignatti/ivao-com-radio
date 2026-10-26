@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>COM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="COM">
+<meta name="theme-color" content="#0A0D0E">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&family=B612:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="annunciator" id="frame"></div>
+
+<div class="waiting" id="waiting">
+  <span class="wait-lamp"></span>
+  <h1>Aguardando o PC</h1>
+  <p>Abra o COM Radio no computador.<br>O rádio aparece aqui sozinho.</p>
+</div>
+
+<main>
+
+  <header>
+    <div class="ident">
+      <span class="lamp" id="lamp"></span>
+      <span id="callsign">&mdash;</span>
+    </div>
+    <time id="utc">--:--z</time>
+  </header>
+
+  <p class="alert" id="alert" hidden></p>
+
+  <section class="radio" id="radio">
+    <div class="stack">
+      <div class="slot">
+        <span class="legend">ativa</span>
+        <span class="freq big" id="active">---.---</span>
+      </div>
+      <button class="swap" id="swap" aria-label="Trocar ativa e standby">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/>
+        </svg>
+      </button>
+      <div class="slot right">
+        <span class="legend">standby</span>
+        <span class="freq" id="standby">---.---</span>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="pill" id="pill-rx">RX</span>
+      <span class="pill" id="pill-tx">TX</span>
+      <span class="spacer"></span>
+      <button class="ghost" id="padtoggle">digitar</button>
+    </div>
+    <div class="meter"><span id="meterbar"></span></div>
+  </section>
+
+  <section class="pad" id="pad" hidden>
+    <div class="padval" id="padval">___.___</div>
+    <p class="paderr" id="paderr" hidden>fora da faixa 118.000 – 136.975</p>
+    <div class="keys" id="keys"></div>
+  </section>
+
+  <button class="ptt" id="ptt" aria-label="Apertar para falar">
+    <span class="ptt-label" id="pttlabel">ouvindo</span>
+    <span class="ptt-sub" id="pttsub">segure para falar</span>
+  </button>
+
+  <section class="atc">
+    <div class="atc-head">
+      <span class="legend">ATC online por perto</span>
+      <span class="legend" id="atccount">–</span>
+    </div>
+    <div class="atc-list" id="atclist">
+      <p class="empty">procurando controladores…</p>
+    </div>
+  </section>
+
+  <footer>
+    <span id="link">conectando…</span>
+    <span id="audiostat">áudio –</span>
+    <span id="pttkey"></span>
+  </footer>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

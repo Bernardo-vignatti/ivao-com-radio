@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Instalar COM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&family=B612:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #E4EAEC; --dim: #7F8D93; --amber: #FFA524; --ok: #62E39B; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #0A0D0E; color: var(--ink);
+    font: 16px/1.5 "B612", system-ui, sans-serif;
+    padding: max(20px, env(safe-area-inset-top)) 20px 40px;
+  }
+  h1 { font: 700 28px "B612 Mono", monospace; color: var(--amber); margin: 8px 0 4px; }
+  .sub { color: var(--dim); margin: 0 0 24px; }
+  ol { padding: 0; margin: 0; list-style: none; counter-reset: step; }
+  li { counter-increment: step; padding: 14px 0 14px 44px; position: relative; border-top: 1px solid #1E2427; }
+  li::before {
+    content: counter(step); position: absolute; left: 0; top: 14px;
+    width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--amber);
+    color: var(--amber); font: 700 15px/28px "B612 Mono", monospace; text-align: center;
+  }
+  b { color: #fff; }
+  a.btn, button {
+    display: block; width: 100%; margin-top: 10px; padding: 14px; border-radius: 10px;
+    background: var(--amber); color: #111; font: 700 16px "B612", sans-serif;
+    text-align: center; text-decoration: none; border: 0;
+  }
+  #status { margin: 24px 0 0; padding: 16px; border-radius: 10px; background: #12171A; }
+  #status.ok { outline: 1px solid var(--ok); }
+  .lamp { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--dim); margin-right: 8px; }
+  .ok .lamp { background: var(--ok); }
+  .wait .lamp { background: var(--amber); }
+  small { color: var(--dim); }
+</style>
+</head>
+<body>
+
+<h1>COM</h1>
+<p class="sub">Instalação no iPhone. Faça uma vez só, no Safari.</p>
+
+<ol>
+  <li>
+    Baixe o certificado do seu PC.
+    <a class="btn" href="/ca.crt">Baixar certificado</a>
+    <small>O iPhone vai perguntar se permite baixar um perfil de configuração. Toque em Permitir.</small>
+  </li>
+  <li>
+    Abra <b>Ajustes</b>. No topo aparece <b>Perfil Transferido</b>. Toque nele,
+    depois em <b>Instalar</b> e digite o código do iPhone.
+  </li>
+  <li>
+    Em <b>Ajustes › Geral › Sobre › Ajustes de Confiança de Certificados</b>,
+    ligue a chave do <b>COM Radio CA</b>.
+  </li>
+  <li>
+    Volte para esta página. Quando aparecer o botão verde, abra o rádio e use
+    <b>Compartilhar › Adicionar à Tela de Início</b>.
+  </li>
+</ol>
+
+<div id="status" class="wait">
+  <p id="msg"><span class="lamp"></span>Aguardando o certificado ser confiável…</p>
+  <a class="btn" id="go" hidden>Abrir o rádio</a>
+</div>
+
+<script>
+// testa o HTTPS de verdade: o fetch so passa se o iPhone ja confia na CA e
+// conseguiu achar o PC por aquele endereco. Tenta o nome primeiro, porque o
+// app salvo pelo nome continua valendo se o IP mudar
+const PORT = "{{PORT}}";
+const byName = `https://{{HOST}}:${PORT}/`;
+const byIp = `https://${location.hostname}:${PORT}/`;
+
+async function reach(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    await fetch(url + "sw.js", { mode: "no-cors", cache: "no-store", signal: ctrl.signal });
+    return true;
+  } catch (_) {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function check() {
+  const box = document.getElementById("status");
+  const msg = document.getElementById("msg");
+  const go = document.getElementById("go");
+  if (await reach(byName)) {
+    go.href = byName;
+    msg.innerHTML = '<span class="lamp"></span>Tudo pronto. O iPhone confia no PC e o encontra pelo nome.';
+  } else if (await reach(byIp)) {
+    go.href = byIp;
+    msg.innerHTML = '<span class="lamp"></span>Pronto, pelo IP. O iPhone não achou o PC pelo nome, ' +
+      'então o atalho usa o IP: se o IP do PC mudar, refaça o passo 4.';
+  } else {
+    setTimeout(check, 3000);
+    return;
+  }
+  box.className = "ok";
+  go.hidden = false;
+}
+
+check();
+</script>
+</body>
+</html>
