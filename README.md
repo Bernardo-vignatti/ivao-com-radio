@@ -107,7 +107,7 @@ Everything is in `config.json`, next to the exe.
 
 | Key | Default | What it does |
 |---|---|---|
-| `ptt_key` | `leftctrl` | Key pressed for PTT. Letters, digits, `f1`–`f24`, numpad keys, modifiers (`leftctrl`, `rightalt`…), or mouse buttons `mouseback`, `mouseforward`, `mousemiddle`. Full list: `SCANCODES` in `ptt.py` |
+| `ptt_key` | `leftctrl` | Key pressed for PTT. Letters, digits, `f1`–`f24`, numpad keys, modifiers (`leftctrl`, `rightalt`…), or mouse buttons `mouseback`, `mouseforward`, `mousemiddle`. Full list: `SCANCODES` in `app/ptt.py` |
 | `ptt_deadman_ms` | `700` | Releases PTT if the phone goes silent this long |
 | `audio_process` | `["ivao", "altitude"]` | Any part of the path of the program whose volume means "someone is talking" |
 | `squelch_open` / `squelch_close` | `0.03` / `0.01` | Level that turns the receive light on / off |
@@ -136,7 +136,7 @@ open, only the first to press controls PTT until it lets go.
 
 ## Troubleshooting
 
-**PTT doesn't transmit.** Run `py server.py --test-ptt`. If it says the key was
+**PTT doesn't transmit.** Run `py app/server.py --test-ptt`. If it says the key was
 sent but IVAO stays silent, `ptt_key` doesn't match IVAO's PTT setting. Error 5
 means IVAO or the sim runs as administrator and COM doesn't: run COM as
 administrator too. With the sim in exclusive fullscreen, try borderless
@@ -146,15 +146,15 @@ windowed.
 cockpit; in the main menu the sim doesn't answer radio requests.
 
 **The frequency doesn't change.** Check avionics power: the sim ignores radio
-writes with the avionics off. `py server.py --test-sim` writes a frequency,
+writes with the avionics off. `py app/server.py --test-sim` writes a frequency,
 checks it took, swaps, and puts everything back.
 
 **"Open IVAO to get the receive light" with IVAO open.** Run
-`py server.py --list-audio` while someone talks on frequency. It lists every
+`py app/server.py --list-audio` while someone talks on frequency. It lists every
 program playing sound and its level; put part of the right one's path in
 `audio_process`.
 
-**The receive light flickers or never turns on.** Run `py server.py --meter`,
+**The receive light flickers or never turns on.** Run `py app/server.py --meter`,
 watch the level when someone talks, and set `squelch_open` a bit below it and
 `squelch_close` around half. The level follows IVAO's volume in Windows.
 
@@ -166,23 +166,23 @@ Needs Python 3.12 or newer on Windows.
 
 ```bash
 py -m pip install -r requirements.txt
-py gui.py
+py app/gui.py
 ```
 
-`py server.py` runs the same server in a terminal, plus diagnostic modes:
+`py app/server.py` runs the same server in a terminal, plus diagnostic modes:
 
 | Command | What it does |
 |---|---|
-| `py server.py --doctor` | Checks PTT, audio, IVAO data and the sim, and says what is missing. **Presses the PTT key for real** |
-| `py server.py --test-ptt` | Presses and releases the PTT key and confirms Windows saw it |
-| `py server.py --test-sim` | Writes to the sim's COM1 standby, swaps, and restores everything |
-| `py server.py --list-audio` | Lists programs playing sound, to find IVAO's |
-| `py server.py --meter` | Live receive level, to tune the squelch |
-| `py server.py --fake-sim` | Runs with a fake simulator, to work on the interface |
+| `py app/server.py --doctor` | Checks PTT, audio, IVAO data and the sim, and says what is missing. **Presses the PTT key for real** |
+| `py app/server.py --test-ptt` | Presses and releases the PTT key and confirms Windows saw it |
+| `py app/server.py --test-sim` | Writes to the sim's COM1 standby, swaps, and restores everything |
+| `py app/server.py --list-audio` | Lists programs playing sound, to find IVAO's |
+| `py app/server.py --meter` | Live receive level, to tune the squelch |
+| `py app/server.py --fake-sim` | Runs with a fake simulator, to work on the interface |
 
 `build.bat` builds `dist\COM Radio.exe` with PyInstaller.
 
-The front end is plain HTML, CSS and JavaScript in `static/`, with no build
+The front end is plain HTML, CSS and JavaScript in `app/static/`, with no build
 step. The type is [B612](https://b612-font.com/), designed by Airbus for
 cockpit displays.
 

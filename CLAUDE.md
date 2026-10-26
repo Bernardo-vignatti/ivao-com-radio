@@ -45,14 +45,22 @@ server.py  ── estado único, broadcast a 10 Hz
 
 O celular só emite eventos. Toda decisão mora no servidor.
 
+Pastas: o código Python e a interface (`static/`) moram em `app/`; na raiz
+ficam `config.json`, `build.bat`, `requirements.txt`, os READMEs, `assets/`
+(ícone e `make_icons.py`) e `docs/` (prints). Os módulos de `app/` se
+importam pelo nome (`import audio`), o que funciona porque o Python põe a
+pasta do script no caminho; por isso os comandos são `py app/server.py` e
+`py app/gui.py`, sem `-m`. Fora do .exe, `server.py` lê o `config.json` da
+pasta acima dele.
+
 Portas: `8443` HTTPS com o rádio, `8080` HTTP só com a página de
-instalação (`static/setup.html`) e o `ca.crt`.
+instalação (`app/static/setup.html`) e o `ca.crt`.
 
 Modos de linha de comando: `--doctor` (checa as quatro pontas e diz o que
 falta), `--test-ptt`, `--test-sim` (escreve no rádio do MSFS e desfaz),
 `--meter` (nível ao vivo para calibrar o squelch), `--list-audio` (quem
 está tocando som e quanto, para achar o processo do IVAO),
-`--fake-sim`. Esses modos só existem no `py server.py`: o .exe não tem
+`--fake-sim`. Esses modos só existem no `py app/server.py`: o .exe não tem
 console.
 
 ## Decisões e o porquê
@@ -138,7 +146,7 @@ uma vez, sem mkcert, com o pacote `cryptography`.
 - **Validade de 397 dias no certificado do servidor**: a Apple recusa mais de
   825 mesmo com CA instalada à mão. Tem `serverAuth` e SAN, que o iOS exige.
 - **Os certificados moram em `%APPDATA%\COM Radio\certs`**, não na pasta do
-  projeto: o .exe e o `py server.py` precisam da mesma CA. A `ca.key` nunca
+  projeto: o .exe e o `py app/server.py` precisam da mesma CA. A `ca.key` nunca
   vai para o git nem para o celular.
 - **Nome antes do IP.** O certificado vale para `<nome-do-pc>.local` e para o IP.
   A página de instalação testa os dois de verdade pelo iPhone e manda
@@ -268,7 +276,7 @@ Testado nesta máquina, com o código atual:
 - O .exe gerado pelo `build.bat`: abre a janela, gera a CA em `%APPDATA%`,
   serve HTTPS pelo IP e pelo `<nome-do-pc>.local` (resolvido no próprio PC), a
   página de instalação, `wss` com estado real e 12 ATC da Whazzup, e fecha
-  limpo. O `py server.py` reaproveita a mesma CA.
+  limpo. O `py app/server.py` reaproveita a mesma CA.
 - Tela de espera num navegador: aparece quando o servidor cai e some sozinha
   quando ele volta.
 
@@ -282,9 +290,9 @@ Testado nesta máquina, com o código atual:
 - O Altitude reagindo à tecla. O servidor prova que a tecla sai; se o Altitude
   não transmitir, a tecla do `config.json` não é a mesma configurada lá.
 - O iPhone numa rede Wi-Fi real. O firewall do Windows precisa liberar o
-  `COM Radio.exe` (e o Python, para `py server.py`) na rede privada.
+  `COM Radio.exe` (e o Python, para `py app/server.py`) na rede privada.
 - **Qual processo do IVAO toca a voz.** O IVAO só abre com o MSFS aberto.
-  Com os dois abertos, `py server.py --list-audio` mostra. Se a voz sair de
+  Com os dois abertos, `py app/server.py --list-audio` mostra. Se a voz sair de
   dentro do `FlightSimulator.exe`, o medidor por sessão mistura motor e vento
   e não serve: aí a volta é o VB-Cable, que está no histórico do git.
 - Os limites de fábrica do squelch (0.03 e 0.01) com voz de verdade.

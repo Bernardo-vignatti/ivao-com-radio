@@ -109,7 +109,7 @@ Tudo fica no `config.json`, ao lado do exe.
 
 | Chave | Padrão | O que faz |
 |---|---|---|
-| `ptt_key` | `leftctrl` | Tecla apertada no PTT. Letras, números, `f1` a `f24`, teclas do numpad, modificadoras (`leftctrl`, `rightalt`…) ou botões do mouse `mouseback`, `mouseforward`, `mousemiddle`. Lista completa: `SCANCODES` no `ptt.py` |
+| `ptt_key` | `leftctrl` | Tecla apertada no PTT. Letras, números, `f1` a `f24`, teclas do numpad, modificadoras (`leftctrl`, `rightalt`…) ou botões do mouse `mouseback`, `mouseforward`, `mousemiddle`. Lista completa: `SCANCODES` no `app/ptt.py` |
 | `ptt_deadman_ms` | `700` | Solta o PTT se o celular ficar esse tempo sem dar sinal |
 | `audio_process` | `["ivao", "altitude"]` | Qualquer pedaço do caminho do programa cujo volume quer dizer "alguém falando" |
 | `squelch_open` / `squelch_close` | `0.03` / `0.01` | Nível que acende / apaga a luz de recepção |
@@ -138,7 +138,7 @@ primeiro a apertar controla o PTT até soltar.
 
 ## Se algo não funcionar
 
-**O PTT não transmite.** Rode `py server.py --test-ptt`. Se ele disser que a
+**O PTT não transmite.** Rode `py app/server.py --test-ptt`. Se ele disser que a
 tecla saiu e a IVAO continuar muda, o `ptt_key` não bate com o PTT
 configurado na IVAO. Erro 5 quer dizer que a IVAO ou o simulador rodam como
 administrador e o COM não: abra o COM como administrador também. Com o
@@ -148,15 +148,15 @@ simulador em tela cheia exclusiva, teste em janela sem bordas.
 cockpit; no menu principal o simulador não responde às variáveis do rádio.
 
 **A frequência não muda.** Confira a energia da aviônica: o simulador ignora
-escrita de rádio com a aviônica desligada. O `py server.py --test-sim`
+escrita de rádio com a aviônica desligada. O `py app/server.py --test-sim`
 escreve uma frequência, confere se entrou, troca e devolve tudo como estava.
 
 **"Abra o IVAO para ter o indicador de RX" com o IVAO aberto.** Rode
-`py server.py --list-audio` com alguém falando na frequência. Ele lista todo
+`py app/server.py --list-audio` com alguém falando na frequência. Ele lista todo
 programa tocando som e o nível de cada um; ponha um pedaço do caminho do
 certo em `audio_process`.
 
-**A luz de recepção pisca ou nunca acende.** Rode `py server.py --meter`,
+**A luz de recepção pisca ou nunca acende.** Rode `py app/server.py --meter`,
 olhe o nível quando alguém fala e ponha `squelch_open` um pouco abaixo dele e
 `squelch_close` mais ou menos na metade. O nível acompanha o volume do IVAO
 no Windows.
@@ -169,24 +169,24 @@ Precisa de Python 3.12 ou mais novo, no Windows.
 
 ```bash
 py -m pip install -r requirements.txt
-py gui.py
+py app/gui.py
 ```
 
-O `py server.py` roda o mesmo servidor num terminal, com modos de
+O `py app/server.py` roda o mesmo servidor num terminal, com modos de
 diagnóstico:
 
 | Comando | O que faz |
 |---|---|
-| `py server.py --doctor` | Confere PTT, áudio, dados da IVAO e simulador, e diz o que falta. **Aperta a tecla de PTT de verdade** |
-| `py server.py --test-ptt` | Aperta e solta a tecla de PTT e confirma que o Windows viu |
-| `py server.py --test-sim` | Escreve no standby do COM1 do simulador, troca e devolve tudo |
-| `py server.py --list-audio` | Lista os programas tocando som, para achar o da IVAO |
-| `py server.py --meter` | Nível de recepção ao vivo, para ajustar o squelch |
-| `py server.py --fake-sim` | Roda com um simulador falso, para mexer na interface |
+| `py app/server.py --doctor` | Confere PTT, áudio, dados da IVAO e simulador, e diz o que falta. **Aperta a tecla de PTT de verdade** |
+| `py app/server.py --test-ptt` | Aperta e solta a tecla de PTT e confirma que o Windows viu |
+| `py app/server.py --test-sim` | Escreve no standby do COM1 do simulador, troca e devolve tudo |
+| `py app/server.py --list-audio` | Lista os programas tocando som, para achar o da IVAO |
+| `py app/server.py --meter` | Nível de recepção ao vivo, para ajustar o squelch |
+| `py app/server.py --fake-sim` | Roda com um simulador falso, para mexer na interface |
 
 O `build.bat` gera o `dist\COM Radio.exe` com o PyInstaller.
 
-A interface é HTML, CSS e JavaScript puros em `static/`, sem etapa de build.
+A interface é HTML, CSS e JavaScript puros em `app/static/`, sem etapa de build.
 A fonte é a [B612](https://b612-font.com/), desenhada pela Airbus para
 displays de cockpit.
 

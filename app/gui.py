@@ -4,7 +4,7 @@ Roda o mesmo servidor do terminal numa thread e mostra o estado de cada
 ponta com luzes. Fechar a janela desliga o radio pelo caminho normal do
 uvicorn, que passa pelo lifespan e solta a tecla de PTT.
 
-Os modos de diagnostico (--doctor, --meter...) continuam em 'py server.py'.
+Os modos de diagnostico (--doctor, --meter...) continuam em 'py app/server.py'.
 """
 
 import sys
@@ -13,7 +13,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 
-HOME = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+# fora do .exe, HOME e a raiz do repositorio, onde ficam assets/ e config.json
+HOME = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent.parent
 ROOT = Path(getattr(sys, "_MEIPASS", HOME))
 
 if getattr(sys, "frozen", False):

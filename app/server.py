@@ -4,13 +4,13 @@ Junta simulador, audio e Whazzup num estado unico e transmite pro telefone
 por WebSocket. O telefone so manda eventos; toda decisao mora aqui.
 
 Uso:
-    py server.py
-    py server.py --fake-sim       roda sem o MSFS aberto
-    py server.py --list-audio     mostra quem esta tocando som, para achar o IVAO
-    py server.py --test-ptt       confere se a tecla de PTT sai de verdade
-    py server.py --meter          nivel de audio ao vivo, para o squelch
-    py server.py --doctor         checa tudo de uma vez e diz o que falta
-    py server.py --test-sim       escreve no radio do MSFS e desfaz
+    py app/server.py
+    py app/server.py --fake-sim       roda sem o MSFS aberto
+    py app/server.py --list-audio     mostra quem esta tocando som, para achar o IVAO
+    py app/server.py --test-ptt       confere se a tecla de PTT sai de verdade
+    py app/server.py --meter          nivel de audio ao vivo, para o squelch
+    py app/server.py --doctor         checa tudo de uma vez e diz o que falta
+    py app/server.py --test-sim       escreve no radio do MSFS e desfaz
 """
 
 import argparse
@@ -52,9 +52,11 @@ if getattr(sys, "frozen", False):
     ROOT = Path(sys._MEIPASS)
     HOME = Path(sys.executable).parent
 else:
-    ROOT = HOME = Path(__file__).parent
-CFG = json.loads((HOME / "config.json").read_text(encoding="utf-8"))
-# um lugar so para o .exe e o 'py server.py': o iPhone confia em uma CA, e
+    # o codigo mora em app/, o config.json na raiz do repositorio
+    ROOT = Path(__file__).parent
+    HOME = ROOT.parent
+CFG =json.loads((HOME / "config.json").read_text(encoding="utf-8"))
+# um lugar so para o .exe e o 'py app/server.py': o iPhone confia em uma CA, e
 # duas pastas gerariam duas CAs diferentes
 CERTS = Path(os.environ.get("APPDATA", HOME)) / "COM Radio" / "certs"
 PORT = int(CFG.get("port", 8443))
@@ -200,7 +202,7 @@ async def lifespan(app: FastAPI):
     RX.start()
     # de proposito sem self_test aqui: ele aperta a tecla de verdade e, com o
     # Altitude aberto, isso e uma transmissao curta na frequencia. Para testar
-    # use 'py server.py --test-ptt' antes de entrar na rede.
+    # use 'py app/server.py --test-ptt' antes de entrar na rede.
     log.info("PTT na tecla '%s'", KEY.name)
     tasks = [asyncio.create_task(pump(stop))]
     if CFG.get("whazzup_enabled", True):
@@ -323,7 +325,7 @@ def doctor() -> int:
             det.running,
             "IVAO no mixer",
             s["source"] or (det.error or "nao achado")
-            + ". Rode 'py server.py --list-audio' com o IVAO aberto.",
+            + ". Rode 'py app/server.py --list-audio' com o IVAO aberto.",
         )
         det.stop()
 
@@ -363,7 +365,7 @@ def doctor() -> int:
         else:
             linha(False, "conexao", bridge.error or "MSFS nao esta aberto num voo")
         bridge.stop()
-        print("     a escrita de frequencia se testa com 'py server.py --test-sim'")
+        print("     a escrita de frequencia se testa com 'py app/server.py --test-sim'")
 
     print("\n5. Rede")
     print("     instalar no iPhone:  http://%s:%s" % (lan_ip(), SETUP_PORT))

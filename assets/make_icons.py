@@ -21,7 +21,7 @@ for i, r in enumerate((135, 210, 285)):
     d.arc(box, -40, 40, fill=tom, width=38)
     d.arc(box, 140, 220, fill=tom, width=38)
 
-static = ROOT / "static"
+static = ROOT / "app" / "static"
 img.resize((180, 180), Image.LANCZOS).save(static / "icon-180.png")
 img.resize((512, 512), Image.LANCZOS).save(static / "icon-512.png")
 img.save(ROOT / "assets" / "icon.ico", sizes=[(16, 16), (32, 32), (48, 48), (256, 256)])
