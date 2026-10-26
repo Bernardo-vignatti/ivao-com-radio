@@ -171,6 +171,51 @@ else:
     _user32 = None
 
 
+def _vk_names() -> dict[int, str]:
+    """Virtual key -> nome do SCANCODES, para reconhecer a tecla apertada.
+
+    Sai do proprio SCANCODES pelo MapVirtualKey, entao toda tecla que da para
+    capturar tambem da para enviar. O numpad entra a mao: com Num Lock ligado
+    ele gera VK_NUMPAD*, que o mapa por scancode nao devolve. O Enter do
+    numpad cai como "enter": o Windows da o mesmo VK aos dois.
+    """
+    names: dict[int, str] = {}
+    for name, (scan, ext) in SCANCODES.items():
+        vk = _user32.MapVirtualKeyW(scan | (0xE000 if ext else 0), MAPVK_VSC_TO_VK_EX)
+        if vk:
+            names.setdefault(vk, name)  # o primeiro nome do dicionario ganha
+    for i in range(10):
+        names[0x60 + i] = "numpad%d" % i
+    names.update({0x6E: "numpaddot", 0x6B: "numpadplus", 0x6D: "numpadminus",
+                  0x6A: "numpadmultiply", 0x6F: "numpaddivide"})
+    for name in ("mouseback", "mouseforward", "mousemiddle"):
+        names[MOUSE_BUTTONS[name][3]] = name
+    return names
+
+
+def capture(timeout: float = 10.0) -> str | None:
+    """Espera o usuario apertar uma tecla ou botao do mouse e devolve o nome.
+
+    Le o estado global do Windows, entao funciona sem foco na janela e pega
+    os botoes laterais do mouse, que o tkinter no Windows nao enxerga. Os
+    botoes esquerdo e direito ficam de fora: o esquerdo e o que acabou de
+    clicar em Mudar. Tecla que ja estava apertada no inicio so conta depois
+    de soltar e apertar de novo.
+    """
+    names = _vk_names()
+    ocupadas = {vk for vk in names if _user32.GetAsyncKeyState(vk) & 0x8000}
+    fim = time.monotonic() + timeout
+    while time.monotonic() < fim:
+        for vk, name in names.items():
+            down = _user32.GetAsyncKeyState(vk) & 0x8000
+            if not down:
+                ocupadas.discard(vk)
+            elif vk not in ocupadas:
+                return name
+        time.sleep(0.015)
+    return None
+
+
 class PttKey:
     """Mantem o estado da tecla e garante que ela nunca fique presa."""
 
@@ -310,3 +355,14 @@ class PttKey:
         if _user32.GetAsyncKeyState(vk) & 0x8000:
             return False, "a tecla %s ficou presa depois do release" % self.name
         return True, "tecla %s apertada e solta com sucesso" % self.name
+
+
+if __name__ == "__main__":
+    # toda tecla que da para enviar tem que dar para capturar, menos o Enter
+    # do numpad, que o Windows nao distingue do Enter normal
+    nomes = set(_vk_names().values())
+    faltando = sorted(n for n in SCANCODES if n not in nomes and n != "numpadenter")
+    assert not faltando, "sem captura: %s" % faltando
+    assert {"leftctrl", "rightctrl", "mouseback", "mouseforward", "mousemiddle"} <= nomes
+    assert ctypes.sizeof(_INPUT) == 40, "INPUT com tamanho errado, o SendInput falharia"
+    print("ok")

@@ -7,8 +7,10 @@ uvicorn, que passa pelo lifespan e solta a tecla de PTT.
 Os modos de diagnostico (--doctor, --meter...) continuam em 'py app/server.py'.
 """
 
+import math
 import sys
 import threading
+import time
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
@@ -25,6 +27,8 @@ if getattr(sys, "frozen", False):
 VOID, FACE, BEZEL = "#0A0D0E", "#141A1C", "#293134"
 LEGEND, INK, AMBER = "#7F8D93", "#E4EAEC", "#FFA524"
 GREEN, RED, OFF = "#62E39B", "#FF4B2B", "#3A4346"
+
+CAPTURE_S = 10  # quanto tempo o Mudar espera a tecla
 
 
 def fail(text: str) -> None:
@@ -86,8 +90,21 @@ class Window:
                      anchor="w").grid(row=i, column=1, sticky="w")
             detail = tk.Label(panel, text="", bg=FACE, fg=LEGEND, font=("Segoe UI", 10),
                               anchor="w", width=34)
-            detail.grid(row=i, column=2, sticky="w", padx=(0, 14))
+            detail.grid(row=i, column=2, sticky="w", padx=(0, 6))
             self.lamps[name], self.details[name] = lamp, detail
+
+        # definir a tecla apertando ela, em vez de achar o nome e editar o
+        # config.json. A captura roda numa thread e devolve por self.captured,
+        # que o tick le: o tkinter nao aceita ser mexido de outra thread
+        self.change = tk.Button(
+            panel, text="Mudar", command=self.start_capture, bg=BEZEL, fg=INK,
+            activebackground=FACE, activeforeground=INK, relief="flat", bd=0,
+            font=("Segoe UI", 9), padx=10, cursor="hand2",
+        )
+        self.change.grid(row=self.ROWS.index("PTT"), column=3, padx=(0, 12))
+        self.capture_until: float | None = None
+        self.captured: str | None = None
+        self.notice: tuple[str, str, float] | None = None
 
         setup_url = "http://%s:%s" % (server.lan_ip(), server.SETUP_PORT)
         bottom = tk.Frame(root, bg=VOID)
@@ -157,12 +174,46 @@ class Window:
         self.show("Celular", GREEN if n else OFF,
                   ("%d conectado" % n) + ("s" if n > 1 else "") if n else "aguardando o iPhone")
 
+        self.finish_capture()
+        agora = time.monotonic()
         if server.KEY.is_down:
             self.show("PTT", RED, "TRANSMITINDO")
+        elif self.capture_until:
+            falta = max(1, math.ceil(self.capture_until - agora))
+            self.show("PTT", AMBER, "aperte a tecla do IVAO… %ds" % falta)
+        elif self.notice and agora < self.notice[2]:
+            self.show("PTT", self.notice[1], self.notice[0])
         else:
             self.show("PTT", OFF, "tecla %s" % server.KEY.name)
 
         self.root.after(250, self.tick)
+
+    def start_capture(self) -> None:
+        if self.capture_until:
+            return
+        if server.KEY.is_down or server.HUB.holder is not None:
+            self.notice = ("solte o PTT antes de trocar", AMBER, time.monotonic() + 3)
+            return
+        self.capture_until = time.monotonic() + CAPTURE_S
+        self.change.configure(state="disabled")
+
+        def run():
+            self.captured = server.ptt_mod.capture(CAPTURE_S) or ""
+
+        threading.Thread(target=run, daemon=True, name="captura").start()
+
+    def finish_capture(self) -> None:
+        if self.captured is None:
+            return
+        nome, self.captured = self.captured, None
+        self.capture_until = None
+        self.change.configure(state="normal")
+        agora = time.monotonic()
+        if not nome:
+            self.notice = ("nenhuma tecla apertada; nada mudou", AMBER, agora + 4)
+            return
+        erro = server.set_ptt_key(nome)
+        self.notice = (erro, RED, agora + 6) if erro else ("tecla %s salva" % nome, GREEN, agora + 3)
 
     def close(self) -> None:
         # o mesmo desligamento do Ctrl+C: o lifespan solta a tecla e fecha

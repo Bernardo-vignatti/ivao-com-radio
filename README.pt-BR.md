@@ -80,14 +80,15 @@ iPhone uma vez.
 
 1. Baixe o `COM-Radio-windows.zip` da
    [última release](../../releases/latest) e extraia onde quiser.
-2. Abra o `config.json` ao lado do exe e ponha em `ptt_key` a mesma tecla que
-   você usa como PTT na IVAO (veja [Configuração](#configuração)).
-3. Abra o `COM Radio.exe`.
+2. Abra o `COM Radio.exe`.
    - O exe não tem assinatura digital, então o SmartScreen do Windows pode
      avisar na primeira vez: clique em **Mais informações › Executar assim
      mesmo**.
    - O Firewall do Windows vai perguntar sobre a rede: libere em **Redes
      privadas**, senão o iPhone não alcança o PC.
+3. **Defina a tecla de PTT:** clique em **Mudar** na linha do PTT da janela e
+   aperte a tecla ou o botão do mouse que você usa como PTT na IVAO. O COM
+   reconhece e salva sozinho; não precisa saber o nome da tecla.
 4. **No iPhone, uma vez só:** aponte a câmera para o QR code da janela (ou
    abra no Safari o endereço `http://…:8080` que ela mostra) e siga os quatro
    passos da página:
@@ -109,7 +110,7 @@ Tudo fica no `config.json`, ao lado do exe.
 
 | Chave | Padrão | O que faz |
 |---|---|---|
-| `ptt_key` | `leftctrl` | Tecla apertada no PTT. Letras, números, `f1` a `f24`, teclas do numpad, modificadoras (`leftctrl`, `rightalt`…) ou botões do mouse `mouseback`, `mouseforward`, `mousemiddle`. Lista completa: `SCANCODES` no `app/ptt.py` |
+| `ptt_key` | `leftctrl` | Tecla apertada no PTT. O jeito fácil é o botão **Mudar** da janela. À mão: letras, números, `f1` a `f24`, teclas do numpad, modificadoras (`leftctrl`, `rightalt`…) ou botões do mouse `mouseback`, `mouseforward`, `mousemiddle`. Lista completa: `SCANCODES` no `app/ptt.py` |
 | `ptt_deadman_ms` | `700` | Solta o PTT se o celular ficar esse tempo sem dar sinal |
 | `audio_process` | `["ivao", "altitude"]` | Qualquer pedaço do caminho do programa cujo volume quer dizer "alguém falando" |
 | `squelch_open` / `squelch_close` | `0.03` / `0.01` | Nível que acende / apaga a luz de recepção |

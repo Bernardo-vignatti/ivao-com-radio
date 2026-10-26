@@ -84,6 +84,29 @@ graça porque a union já estava declarada inteira para a struct ter 40 bytes.
 Cuidado ao sugerir: um `XBUTTON1` sintético faz o app em foco voltar de
 página, então fora do simulador ele atrapalha.
 
+**A tecla se define apertando ela (out/2026).** Achar o nome certo e editar o
+`config.json` era difícil para o usuário. O botão Mudar da janela do PC chama
+`ptt.capture()`, que lê o `GetAsyncKeyState` global até alguma tecla descer,
+e `server.set_ptt_key()`, que troca a tecla com tudo rodando e reescreve só a
+linha `ptt_key` do config. Detalhes que importam:
+
+- O mapa de captura sai do próprio `SCANCODES` pelo `MapVirtualKey`, então
+  toda tecla capturável também é enviável. O numpad entra à mão
+  (`VK_NUMPAD*` com Num Lock). O Enter do numpad vira `enter`: o Windows dá
+  o mesmo VK aos dois.
+- Global e não por eventos do tkinter: o tkinter no Windows não enxerga os
+  botões laterais do mouse, e a janela nem precisa de foco. Botões esquerdo
+  e direito ficam de fora (o esquerdo acabou de clicar em Mudar); tecla já
+  apertada no início só conta depois de soltar.
+- **Recusa trocar com PTT apertado ou com alguém segurando**, e solta a tecla
+  antiga depois da troca: sem isso a tecla antiga poderia ficar presa, que é
+  o que o dead-man switch existe para impedir.
+- Mudar só na janela do PC, por decisão do usuário: a tecla é apertada no
+  teclado do PC de qualquer jeito.
+
+Testado com tecla real (F13, Ctrl e Shift dos dois lados, Alt), com a
+recusa no meio de transmissão e com o tempo esgotando sem tecla.
+
 **O self-test não roda no boot, de propósito.** Ele aperta a tecla de
 verdade; com o Altitude conectado isso é uma transmissão curta na frequência.
 Fica só nos comandos explícitos.

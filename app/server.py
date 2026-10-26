@@ -18,6 +18,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import socket
 import sys
 import time
@@ -160,6 +161,35 @@ def build(fake_sim: bool = False) -> None:
     )
     RX = audio_mod.RxDetector(CFG) if CFG.get("audio_enabled", True) else audio_mod.NullDetector()
     FEED = WhazzupFeed(CFG)
+
+
+def set_ptt_key(name: str) -> str | None:
+    """Troca a tecla de PTT com o servidor rodando e salva no config.json.
+
+    Devolve o erro para mostrar, ou None. Recusa no meio de uma transmissao:
+    trocar com a tecla antiga apertada a deixaria presa.
+    """
+    global KEY
+    if KEY.is_down or HUB.holder is not None:
+        return "solte o PTT antes de trocar a tecla"
+    antiga, nova = KEY, ptt_mod.PttKey(name)
+    KEY = HUB.key = nova
+    # o celular pode ter apertado entre a checagem e a troca
+    antiga.force_release("tecla de PTT trocada")
+    CFG["ptt_key"] = nova.name
+    log.info("PTT agora na tecla '%s'", nova.name)
+
+    path = HOME / "config.json"
+    try:
+        texto = path.read_text(encoding="utf-8")
+        # so a linha da tecla, para nao reformatar o arquivo que o usuario edita
+        novo, achou = re.subn(
+            r'("ptt_key"\s*:\s*)"[^"]*"', lambda m: m.group(1) + json.dumps(nova.name), texto
+        )
+        path.write_text(novo if achou else json.dumps(CFG, indent=2), encoding="utf-8")
+    except OSError as exc:
+        return "tecla trocada, mas não consegui salvar o config.json: %s" % exc
+    return None
 
 
 def build_state() -> dict:

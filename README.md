@@ -79,13 +79,14 @@ small certificate authority on your PC. You trust it on the iPhone once.
 
 1. Download `COM-Radio-windows.zip` from the
    [latest release](../../releases/latest) and extract it anywhere.
-2. Open `config.json` next to the exe and set `ptt_key` to the same key you use
-   for PTT in IVAO (see [Configuration](#configuration)).
-3. Run `COM Radio.exe`.
+2. Run `COM Radio.exe`.
    - The exe is not code-signed, so Windows SmartScreen may warn you the first
      time: click **More info › Run anyway**.
    - Windows Firewall will ask about network access: allow **Private
      networks**, otherwise the iPhone can't reach the PC.
+3. **Set your PTT key:** click **Mudar** (change) on the PTT line of the
+   window, then press the key or mouse button you use for PTT in IVAO. COM
+   recognizes it and saves it; no need to know its name.
 4. **On the iPhone, once:** point the camera at the QR code in the window (or
    open the `http://…:8080` address it shows in Safari) and follow the four
    steps on the page:
@@ -107,7 +108,7 @@ Everything is in `config.json`, next to the exe.
 
 | Key | Default | What it does |
 |---|---|---|
-| `ptt_key` | `leftctrl` | Key pressed for PTT. Letters, digits, `f1`–`f24`, numpad keys, modifiers (`leftctrl`, `rightalt`…), or mouse buttons `mouseback`, `mouseforward`, `mousemiddle`. Full list: `SCANCODES` in `app/ptt.py` |
+| `ptt_key` | `leftctrl` | Key pressed for PTT. Easiest to set with the **Mudar** button in the window. By hand: letters, digits, `f1`–`f24`, numpad keys, modifiers (`leftctrl`, `rightalt`…), or mouse buttons `mouseback`, `mouseforward`, `mousemiddle`. Full list: `SCANCODES` in `app/ptt.py` |
 | `ptt_deadman_ms` | `700` | Releases PTT if the phone goes silent this long |
 | `audio_process` | `["ivao", "altitude"]` | Any part of the path of the program whose volume means "someone is talking" |
 | `squelch_open` / `squelch_close` | `0.03` / `0.01` | Level that turns the receive light on / off |
