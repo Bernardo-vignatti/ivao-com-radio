@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>COM Radio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand">
+    <div class="logo">COM</div>
+    <div class="brand-text"><b>COM Radio</b><small>rádio para o IVAO Altitude</small></div>
+  </div>
+
+  <nav id="nav">
+    <button data-page="painel" class="on">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+      Painel
+    </button>
+    <button data-page="audio">
+      <svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2M21 12h0"/></svg>
+      Áudio
+    </button>
+    <button data-page="ptt">
+      <svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M6.5 10h1M10.5 10h1M14.5 10h1M8 14h8"/></svg>
+      Tecla PTT
+    </button>
+    <button data-page="iphone">
+      <svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+      iPhone
+    </button>
+    <button data-page="config">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Configurações
+    </button>
+  </nav>
+
+  <div class="side-foot">
+    <div class="side-status"><span class="lamp" id="side-lamp"></span><span id="side-text">iniciando…</span></div>
+    <button class="btn ghost small" id="quit">Sair do COM Radio</button>
+  </div>
+</aside>
+
+<main>
+  <header class="top">
+    <div>
+      <h1 id="title">Painel</h1>
+      <p id="subtitle">Tudo o que liga o iPhone ao IVAO, num lugar só.</p>
+    </div>
+    <div class="clock"><span class="mono" id="utc">--:--:--</span><small>UTC</small></div>
+  </header>
+
+  <!-- ============================================================ painel -->
+  <section class="page" id="page-painel">
+    <div class="stats">
+      <div class="card stat" id="st-server">
+        <div class="stat-top"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><span class="lamp"></span></div>
+        <b>Servidor</b><small class="detail">iniciando…</small>
+      </div>
+      <div class="card stat" id="st-sim">
+        <div class="stat-top"><span class="ico"><svg viewBox="0 0 24 24"><path d="M10.2 13.8 3 11l1.5-1.5 7.2.9 4.6-4.6a2 2 0 0 1 2.9 2.9l-4.6 4.6.9 7.2L14 22l-2.8-7.2"/></svg></span><span class="lamp"></span></div>
+        <b>MSFS</b><small class="detail">–</small>
+      </div>
+      <div class="card stat" id="st-audio">
+        <div class="stat-top"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg></span><span class="lamp"></span></div>
+        <b>Áudio</b><small class="detail">–</small>
+      </div>
+      <div class="card stat" id="st-phone">
+        <div class="stat-top"><span class="ico"><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></span><span class="lamp"></span></div>
+        <b>Celular</b><small class="detail">–</small>
+      </div>
+      <div class="card stat" id="st-ptt">
+        <div class="stat-top"><span class="ico"><svg viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg></span><span class="lamp"></span></div>
+        <b>PTT</b><small class="detail">–</small>
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="card radio" id="radio">
+        <div class="card-head">
+          <span class="card-title">Rádio COM1</span>
+          <span class="chip mono" id="callsign">—</span>
+        </div>
+        <div class="freqs">
+          <div class="slot">
+            <label>Ativa</label>
+            <div class="freq big mono" id="act">---.---</div>
+          </div>
+          <svg class="swapico" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/></svg>
+          <div class="slot right">
+            <label>Standby</label>
+            <div class="freq mono" id="sby">---.---</div>
+          </div>
+        </div>
+        <div class="radio-foot">
+          <span class="pill" id="p-rx">RX</span>
+          <span class="pill" id="p-tx">TX</span>
+          <span class="muted" id="radio-note">espelho do rádio do simulador</span>
+        </div>
+      </div>
+
+      <div class="card level">
+        <div class="card-head">
+          <span class="card-title">Áudio do IVAO</span>
+          <span class="chip" id="aud-src">–</span>
+        </div>
+        <canvas id="chart-mini"></canvas>
+        <div class="chart-legend">
+          <span><i class="sw sw-open"></i>abre o squelch</span>
+          <span><i class="sw sw-close"></i>fecha</span>
+          <span class="spacer"></span>
+          <button class="link" data-goto="audio">Calibrar →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card atc">
+      <div class="card-head">
+        <span class="card-title">ATC online por perto</span>
+        <span class="chip" id="atc-count">–</span>
+      </div>
+      <div class="table" id="atc-list"><p class="empty">procurando controladores…</p></div>
+    </div>
+  </section>
+
+  <!-- ============================================================= audio -->
+  <section class="page" id="page-audio" hidden>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Nível ao vivo</span>
+        <span class="chip" id="aud-rx">–</span>
+      </div>
+      <canvas id="chart-big"></canvas>
+      <div class="chart-legend">
+        <span><i class="sw sw-open"></i>abre o squelch</span>
+        <span><i class="sw sw-close"></i>fecha</span>
+        <span class="spacer"></span>
+        <span class="muted">nível <b class="mono" id="aud-level">0.0000</b></span>
+        <span class="muted">pico <b class="mono" id="aud-peak">0.0000</b></span>
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Squelch</span></div>
+        <p class="help">Espere alguém falar no IVAO e olhe a altura da voz no gráfico. Deixe a linha
+          de abrir um pouco abaixo dela e a de fechar perto da metade.</p>
+        <div class="slider">
+          <div class="slider-head"><span>Abre acima de</span><b class="mono" data-show="squelch_open"></b></div>
+          <input type="range" data-cfg="squelch_open" min="0.002" max="0.2" step="0.001">
+        </div>
+        <div class="slider">
+          <div class="slider-head"><span>Fecha abaixo de</span><b class="mono" data-show="squelch_close"></b></div>
+          <input type="range" data-cfg="squelch_close" min="0" max="0.15" step="0.001">
+        </div>
+        <div class="slider">
+          <div class="slider-head"><span>Segura aberto por</span><b class="mono" data-show="squelch_hang_ms"></b></div>
+          <input type="range" data-cfg="squelch_hang_ms" min="50" max="1500" step="10">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">Programa do IVAO</span></div>
+        <p class="help">O COM mede o som do programa cujo caminho contém um destes pedaços,
+          separados por vírgula.</p>
+        <input class="field mono" type="text" data-cfg="audio_process" spellcheck="false">
+        <div class="scan-head">
+          <button class="btn" id="scan">Procurar programas com som</button>
+          <span class="muted" id="scan-note"></span>
+        </div>
+        <div class="scan-list" id="scan-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================================== ptt -->
+  <section class="page" id="page-ptt" hidden>
+    <div class="row-2">
+      <div class="card hero">
+        <div class="card-head"><span class="card-title">Tecla em uso</span></div>
+        <div class="keycap-wrap">
+          <div class="keycap mono" id="keycap">leftctrl</div>
+        </div>
+        <p class="ptt-line" id="ptt-line">É a tecla que o COM aperta quando você segura o PTT no iPhone.</p>
+        <div class="actions">
+          <button class="btn primary" id="capture">Mudar tecla</button>
+          <button class="btn" id="test">Testar tecla</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">Como funciona</span></div>
+        <ol class="steps">
+          <li><b>Mudar tecla</b> espera você apertar a tecla ou o botão do mouse
+            que está configurado no IVAO Altitude. Não precisa deixar esta janela em foco.</li>
+          <li><b>Testar tecla</b> aperta e solta a tecla de verdade e confere se o Windows
+            registrou. <span class="warn">Com o Altitude conectado, isso faz uma transmissão curta.</span></li>
+          <li>Se o teste passa mas o Altitude não transmite, a tecla daqui é diferente da
+            configurada lá.</li>
+        </ol>
+        <div class="safety">
+          <svg viewBox="0 0 24 24"><path d="M12 2.5 4 6v6c0 5 3.4 8.6 8 9.5 4.6-.9 8-4.5 8-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          <p>Proteção contra PTT preso: se o iPhone perder a conexão no meio de uma transmissão,
+            o COM solta a tecla sozinho em <b id="deadman">700</b> ms.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ iphone -->
+  <section class="page" id="page-iphone" hidden>
+    <div class="row-2">
+      <div class="card qr-card">
+        <div class="qr" id="qr"></div>
+        <div>
+          <span class="card-title">Instalar no iPhone</span>
+          <p class="help">Aponte a câmera do iPhone para o código, ou abra no Safari:</p>
+          <p class="url mono" id="setup-url">–</p>
+          <p class="help">O iPhone precisa estar no mesmo Wi-Fi que este PC.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Conexão</span>
+          <span class="chip" id="phones">–</span>
+        </div>
+        <ol class="steps">
+          <li>Abra o endereço de instalação no <b>Safari</b> e baixe o certificado. Em
+            <b>Ajustes › Perfil Transferido</b>, toque em <b>Instalar</b>.</li>
+          <li>Em <b>Ajustes › Geral › Sobre › Ajustes de Confiança de Certificados</b>,
+            ligue o <b>COM Radio CA</b>.</li>
+          <li>Volte à página de instalação, abra o rádio e use
+            <b>Compartilhar › Adicionar à Tela de Início</b>.</li>
+          <li>Depois disso é só tocar no ícone <b>COM</b>. Com o PC desligado, ele espera sozinho.</li>
+        </ol>
+        <p class="help">Endereço do rádio: <span class="mono amber" id="radio-url">–</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ config -->
+  <section class="page" id="page-config" hidden>
+    <div class="row-2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Aplicativo</span></div>
+        <label class="toggle">
+          <span><b>Fechar vai para a bandeja</b><small>O X esconde a janela e o rádio continua funcionando.</small></span>
+          <input type="checkbox" data-cfg="tray_on_close"><i></i>
+        </label>
+        <label class="toggle">
+          <span><b>Iniciar com o Windows</b><small>Abre escondido na bandeja quando você entra no Windows.</small></span>
+          <input type="checkbox" data-cfg="autostart"><i></i>
+        </label>
+        <label class="toggle">
+          <span><b>Simulador (SimConnect)</b><small>Lê e escreve o rádio do MSFS. Vale ao reabrir o app.</small></span>
+          <input type="checkbox" data-cfg="sim_enabled"><i></i>
+        </label>
+        <label class="toggle">
+          <span><b>Indicador de RX</b><small>Mede o som do IVAO no Windows. Vale ao reabrir o app.</small></span>
+          <input type="checkbox" data-cfg="audio_enabled"><i></i>
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">ATC online (Whazzup da IVAO)</span></div>
+        <label class="toggle">
+          <span><b>Buscar ATC online</b><small>Vale ao reabrir o app.</small></span>
+          <input type="checkbox" data-cfg="whazzup_enabled"><i></i>
+        </label>
+        <div class="num">
+          <span><b>Raio de busca</b><small>milhas náuticas a partir do avião</small></span>
+          <input class="field mono" type="number" data-cfg="whazzup_radius_nm" min="10" max="3000">
+        </div>
+        <div class="num">
+          <span><b>Máximo de estações</b><small>na lista do iPhone</small></span>
+          <input class="field mono" type="number" data-cfg="whazzup_max_stations" min="1" max="50">
+        </div>
+        <div class="num">
+          <span><b>Atualizar a cada</b><small>segundos, no mínimo 15</small></span>
+          <input class="field mono" type="number" data-cfg="whazzup_interval_s" min="15" max="600">
+        </div>
+      </div>
+    </div>
+
+    <div class="card about">
+      <div class="logo big">COM</div>
+      <div class="about-text">
+        <b>COM Radio <span class="mono" id="version"></span></b>
+        <small>Configurações, certificados e registro ficam em <span class="mono" id="data-dir"></span></small>
+        <small>Portas: rádio <span class="mono" id="port"></span>, instalação <span class="mono" id="setup-port"></span></small>
+      </div>
+      <button class="btn" id="open-data">Abrir pasta de dados</button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="desktop.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Guarda a interface no iPhone para ela abrir mesmo com o PC desligado.
 // Troque o numero quando quiser forcar todo mundo a baixar de novo.
-const CACHE = "com-v1";
+const CACHE = "com-v2";
 const SHELL = [
   "/",
   "/static/style.css",

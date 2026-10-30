@@ -34,7 +34,7 @@ exigir falar com os servidores da IVAO diretamente, pare e reconsidere.
 iPhone (PWA na tela de início, interface guardada pelo service worker)
    │  wss://<nome-do-pc>.local:8443, LAN, CA própria
    ▼
-gui.py     ── janela de status; é o que vira "COM Radio.exe"
+gui.py     ── janela pywebview (app/desktop/) e bandeja; vira "COM Radio.exe"
 server.py  ── estado único, broadcast a 10 Hz
    ├── certs.py     CA local, certificado do servidor, página de instalação
    ├── ptt.py       SendInput com scancode
@@ -45,13 +45,14 @@ server.py  ── estado único, broadcast a 10 Hz
 
 O celular só emite eventos. Toda decisão mora no servidor.
 
-Pastas: o código Python e a interface (`static/`) moram em `app/`; na raiz
-ficam `config.json`, `build.bat`, `requirements.txt`, os READMEs, `assets/`
-(ícone e `make_icons.py`) e `docs/` (prints). Os módulos de `app/` se
-importam pelo nome (`import audio`), o que funciona porque o Python põe a
-pasta do script no caminho; por isso os comandos são `py app/server.py` e
-`py app/gui.py`, sem `-m`. Fora do .exe, `server.py` lê o `config.json` da
-pasta acima dele.
+Pastas: o código Python, a interface do celular (`static/`) e a do PC
+(`desktop/`) moram em `app/`; na raiz ficam `config.json`, `build.bat`,
+`installer.iss`, `requirements.txt`, os READMEs, `assets/` (ícone e
+`make_icons.py`) e `docs/` (prints). Os módulos de `app/` se importam pelo
+nome (`import audio`), o que funciona porque o Python põe a pasta do script
+no caminho; por isso os comandos são `py app/server.py` e `py app/gui.py`,
+sem `-m`. Fora do .exe, `server.py` lê o `config.json` da pasta acima dele;
+no .exe, de `%APPDATA%\COM Radio` (ver Instalador).
 
 Portas: `8443` HTTPS com o rádio, `8080` HTTP só com a página de
 instalação (`app/static/setup.html`) e o `ca.crt`.
@@ -182,14 +183,59 @@ uma vez, sem mkcert, com o pacote `cryptography`.
   segunda abertura; para forçar, troque `CACHE` em `sw.js`.
 
 **O .exe é a janela, o servidor roda numa thread.** `gui.py` chama
-`server.make_server()` e roda o `uvicorn.Server` numa thread. Fechar a janela
-põe `should_exit`, o que passa pelo `lifespan` e solta a tecla — o caminho do
+`server.make_server()` e roda o `uvicorn.Server` numa thread. Sair põe
+`should_exit`, o que passa pelo `lifespan` e solta a tecla — o caminho do
 shutdown do dead-man switch continua o mesmo. No .exe o stdout e o stderr vão
-para `com-radio.log` ao lado dele: sem isso o uvicorn quebra ao perguntar se
-o stdout é terminal. Porta ocupada vira uma caixa de mensagem dizendo que o
-app provavelmente já está aberto. `build.bat` gera `dist\COM Radio.exe` com
-PyInstaller em arquivo único e copia o `config.json` para o lado dele, sem
-sobrescrever. Depois de mudar qualquer arquivo, rode o `build.bat` de novo.
+para `%APPDATA%\COM Radio\com-radio.log`: sem isso o uvicorn quebra ao
+perguntar se o stdout é terminal. Porta ocupada vira uma caixa de mensagem.
+
+**Janela do PC em pywebview (out/2026).** O tkinter não fazia o visual que o
+usuário pediu (cards arredondados, gráfico, controles). A janela é HTML/CSS/JS
+puro em `app/desktop/`, mostrado pelo WebView2 via pywebview (testado no
+Python 3.14 com pythonnet 3.2). Detalhes que importam:
+
+- **A página fala com o Python pela ponte `js_api` (classe `Api`), nunca pela
+  rede.** Configurações e teste de tecla não podem ficar alcançáveis pelo
+  Wi-Fi; o celular só enxerga o rádio. O pywebview não expõe nomes com `_`.
+- **`Api.set_config` só aceita as chaves de `NUMBERS`, `SWITCHES`,
+  `audio_process` e `autostart`, com limites.** O que dá para aplicar ao vivo
+  (squelch, raio, intervalo, processo do IVAO) entra na hora mexendo nos
+  atributos do `RX` e do `FEED`; `sim_enabled`, `audio_enabled` e
+  `whazzup_enabled` valem ao reabrir. `server.save_config` troca só o valor
+  da chave no arquivo, como o `set_ptt_key` sempre fez. O `ptt_deadman_ms`
+  fica de fora de propósito: é o parâmetro de segurança.
+- **Bandeja com pystray.** O X esconde a janela (`closing` devolve False) e o
+  servidor segue; `tray_on_close: false` volta a fechar de vez. Sair pela
+  bandeja ou pelo botão da janela chama `quit_app`, que destrói a janela, e o
+  fim do `__main__` faz o mesmo desligamento de antes. Testado com F13
+  apertada: o lifespan soltou a tecla.
+- **Uma instância só**, pelo mutex `COMRadio.Instance`. Abrir de novo sinaliza
+  o evento `COMRadio.Show` e a janela escondida aparece. O instalador usa o
+  mesmo mutex (`AppMutex`).
+- **Barra de título escura** por `DwmSetWindowAttribute(20)` no evento
+  `shown`, seguida de `SetWindowPos` com `FRAMECHANGED`; sem esse segundo
+  passo ela só escurece no próximo redesenho.
+- **Iniciar com o Windows** grava `"<exe>" --tray` em `HKCU\...\Run`, só no
+  app instalado. `--tray` abre escondido.
+- A captura de tecla e o teste mantêm as recusas de antes: nada com PTT
+  apertado ou com algum celular segurando. O teste pede dois cliques porque
+  transmite de verdade com o Altitude conectado.
+
+**Instalador (out/2026).** O usuário trocou o zip por um instalador. O
+`build.bat` gera `dist\COM Radio\` com PyInstaller em pasta (abre mais rápido
+que arquivo único e o antivírus desconfia menos) e compila `installer.iss`
+com o Inno Setup (`winget install JRSoftware.InnoSetup`, por usuário). O
+instalador põe tudo em Arquivos de Programas, cria atalhos, adiciona a regra
+"COM Radio" no firewall só em rede **privada** (apagando antes para não
+duplicar), baixa o WebView2 se faltar e, na desinstalação, tira a regra, o
+`Run` e pergunta antes de apagar `%APPDATA%\COM Radio` (que tem a CA).
+
+- **Config e log em `%APPDATA%\COM Radio`** no app instalado, porque
+  Arquivos de Programas não aceita escrita. Na primeira abertura o config vem
+  de um `config.json` ao lado do .exe (o zip antigo), ou do padrão empacotado.
+- A versão mora em dois lugares: `VERSION` no `gui.py` e `AppVersion` no
+  `installer.iss`. Mudou uma, muda a outra.
+- Depois de mudar qualquer arquivo, rode o `build.bat` de novo.
 
 **Dead-man switch.** O celular manda heartbeat a cada 200 ms enquanto o PTT
 está apertado; 700 ms sem heartbeat e o servidor solta a tecla. Sem isso, uma
@@ -225,30 +271,58 @@ malformada é ignorada sem derrubar a conexão.
 
 ## Interface
 
-Ancorada no objeto real, um rádio comm de painel. Frequências em âmbar sobre
-preto, como o display de descarga de gás de um Bendix/King KX155. Tipografia
-B612, desenhada pela Airbus para displays de cockpit, com B612 Mono nos
-números.
+**Celular: o rádio físico (out/2026).** O usuário pediu realismo, com o
+Bendix/King KX155 como referência, só na vertical. Placa preta fosca com
+parafusos e legendas brancas impressas, tudo em CSS, sem imagens. O display
+imita a descarga de gás: dígitos de sete segmentos desenhados em SVG pelo
+`app.js` (`buildSeg`/`setSeg`), com os segmentos apagados visíveis como
+fantasma, legendas USE e STBY, e TX, RX, 8.33 e uma barra de sinal
+segmentada (o nível do IVAO) no rodapé do display. Sem fonte de sete
+segmentos para baixar: funciona offline. Tipografia B612 no resto.
+
+Em cima, três lâmpadas de anunciador (PC, MSFS, ÁUDIO) substituem o antigo
+rodapé de texto; a tecla de PTT em uso aparece gravada no próprio botão.
+
+**Botão giratório duplo.** Anel de fora em MHz (118 a 136, dando a volta),
+miolo em kHz, que dá a volta sem mexer no MHz, como no rádio real. 18° por
+clique. Passos de 25 kHz; um toque no miolo sem girar liga os canais de 8.33
+(nomes .000/.005/.010/.015 de cada bloco de 25), como puxar o miolo de um
+KX155A, e fica guardado no `localStorage`. O display mostra o valor girado na
+hora; o `standby` sai 450 ms depois do último clique e ao soltar, nunca a
+cada clique, para não inundar o SimConnect. O valor girado fica na tela até o
+simulador confirmar ou 2,5 s passarem. 136.975 é o teto: no MHz 136 o kHz
+para em 975.
+
+O teclado numérico continua (botão FREQ): girar é lento para saltos grandes.
 
 A assinatura é a moldura da tela funcionando como anunciador: verde inteira
 quando alguém transmite, vermelha quando é o usuário. O objetivo é ser legível
 pelo canto do olho, com o celular num suporte, sem exigir foco. Preserve isso.
+O PTT segue a mesma lógica de cor (borracha escura, verde no RX, vermelho e
+afundado no TX).
 
-Os corpos das frequências e o botão de troca usam `clamp()` com `vw`: em
-largura fixa o standby vazava para fora da tela num iPhone de 375 px.
+Os dígitos e o botão giratório usam `clamp()` com `vw`: em largura fixa o
+standby vazava para fora da tela num iPhone de 375 px.
 
-Sem WebSocket, uma tela "Aguardando o PC" cobre tudo, com uma luz âmbar
-pulsando. Ela aparece na hora quando o app abre sem servidor, e só depois de
-1,5 s numa queda, para um soluço de Wi-Fi não piscar a tela. A reconexão
-tenta no máximo a cada 2 s, para o rádio aparecer logo quando o PC abre.
+Sem WebSocket, uma tela "Aguardando o PC" cobre tudo: o rádio aparece
+desligado, só com os segmentos fantasma, e uma luz âmbar pulsando. Ela
+aparece na hora quando o app abre sem servidor, e só depois de 1,5 s numa
+queda, para um soluço de Wi-Fi não piscar a tela. A reconexão tenta no máximo
+a cada 2 s, para o rádio aparecer logo quando o PC abre.
 
 O botão de PTT só apaga quando o WebSocket cai. Ele não depende do MSFS — a
 tecla vai para o Altitude com o simulador fechado, então apagar por causa do
-simulador seria mentira.
+simulador seria mentira. O botão giratório não responde sem WebSocket.
 
-Erros de SimConnect e de áudio aparecem numa faixa acima do rádio, e o rodapé
-mostra a tecla de PTT em uso. Uma barra fina embaixo das frequências mostra o
-nível de áudio do IVAO, para conferir de longe que o RX está sendo medido.
+Erros de SimConnect e de áudio aparecem numa etiqueta de aviso acima do
+rádio. Erros que o servidor devolve (frequência recusada) piscam no próprio
+display por 2,5 s.
+
+**PC.** Grafite escuro, cards de cantos arredondados, âmbar, verde e vermelho
+do celular, Segoe UI no texto e B612 Mono nos números. Páginas: Painel
+(estado das cinco pontas, espelho do rádio, gráfico do nível, ATC), Áudio
+(gráfico grande com as linhas do squelch, controles deslizantes, procurar
+programas com som), Tecla PTT, iPhone (QR e passos) e Configurações.
 
 Especificidades de iOS já tratadas: `-webkit-touch-callout: none` (segurar o
 PTT ia abrir o menu de seleção), `setPointerCapture`, `viewport-fit=cover` com
@@ -302,8 +376,24 @@ Testado nesta máquina, com o código atual:
   limpo. O `py app/server.py` reaproveita a mesma CA.
 - Tela de espera num navegador: aparece quando o servidor cai e some sozinha
   quando ele volta.
+- Redesign de out/2026, nesta máquina: a janela pywebview abre pelo `py` e
+  pelo `dist\COM Radio\COM Radio.exe` (com o config migrado para
+  `%APPDATA%`); o X esconde na bandeja e abrir de novo mostra a janela; o
+  Sair solta a tecla apertada pelo lifespan. As cinco páginas do PC com uma
+  ponte falsa no navegador. No celular, em 375×812: o display, o botão
+  giratório (MHz dando a volta, kHz em 25 e em 8.33, envio só depois de
+  parar, confirmado pelo simulador falso), o PTT pela interface (moldura,
+  heartbeat, blur soltando) e, contra o servidor, os cenários do PTT de novo
+  (normal, dead-man, heartbeat segurando, outro cliente não solta, frequência
+  fora da faixa, lixo, desconexão soltando).
 
 **Ainda não verificado**, e só o usuário consegue fechar:
+
+- O instalador rodando de verdade: pede administrador (UAC), então ficou para
+  o usuário. Compila sem erro; falta ver a instalação, os atalhos, a regra do
+  firewall, o Iniciar com o Windows pelo app instalado e a desinstalação.
+- O botão giratório com o dedo num iPhone de verdade (testado com eventos de
+  ponteiro sintéticos e mouse).
 
 - O iPhone instalando a CA e confiando nela, e o service worker abrindo a
   tela de espera com o PC desligado.
@@ -335,12 +425,13 @@ Nada disso foi pedido ainda. Não implemente sem o usuário pedir.
 
 Código e comentários em português sem acentos. Mensagens de log e textos de
 interface em português normal, com acento. Front sem framework e sem build:
-HTML, CSS e JS puros, editáveis direto. Configuração vai para o
+HTML, CSS e JS puros, editáveis direto, tanto no celular quanto no PC. Configuração vai para o
 `config.json`, nunca fixa no código.
 
 O repositório é público no GitHub (`ivao-com-radio`, licença MIT). O
 `README.md` é em inglês e o `README.pt-BR.md` é a mesma coisa em português:
 mudou um, muda o outro. Os prints em `docs/` saem da interface com
-`--fake-sim`. O `config.json` do repositório tem os padrões públicos
-(`ptt_key` em `leftctrl`); o do usuário mora em `dist/` e o `build.bat`
-não sobrescreve. A release leva um zip com o .exe e o `config.json`.
+`--fake-sim` (o do PC com `py app/gui.py --fake-sim`). O `config.json` do
+repositório tem os padrões públicos (`ptt_key` em `leftctrl`) e vai empacotado
+como padrão; o do usuário mora em `%APPDATA%\COM Radio`. A release leva o
+`COM-Radio-Setup-<versão>.exe`.

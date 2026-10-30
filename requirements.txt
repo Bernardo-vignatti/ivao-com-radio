@@ -6,3 +6,6 @@ cryptography
 qrcode
 pyinstaller
 pycaw
+pywebview
+pystray
+pillow

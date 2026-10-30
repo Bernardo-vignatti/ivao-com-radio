@@ -159,35 +159,47 @@ class NullDetector:
                 "source": None, "error": None}
 
 
-def list_sessions(cfg: dict, seconds: float = 5.0) -> None:
-    """Mostra quem esta tocando som e quanto, para achar o processo do IVAO."""
-    needles = [n.lower() for n in cfg.get("audio_process", ["ivao", "altitude"])]
+def measure_sessions(needles: list[str], seconds: float) -> list[dict]:
+    """Pico de cada programa com som durante alguns segundos.
+
+    Roda em qualquer thread: abre e fecha o COM por conta propria.
+    """
+    needles = [n.lower() for n in needles]
     comtypes.CoInitialize()
     try:
         achados = sessions()
-        if not achados:
-            print("nenhum programa com som aberto no Windows.")
-            return
-        print("medindo por %.0f s; fale ou espere alguem transmitir no IVAO...\n" % seconds)
         picos = [0.0] * len(achados)
         fim = time.monotonic() + seconds
-        while time.monotonic() < fim:
+        while achados and time.monotonic() < fim:
             for i, (_, m) in enumerate(achados):
                 try:
                     picos[i] = max(picos[i], m.GetPeakValue())
                 except Exception:
                     pass
             time.sleep(POLL_S)
-        for (exe, _), pico in zip(achados, picos):
-            marca = "IVAO" if matches(exe, needles) else "    "
-            print("  %s  pico %.4f  %s" % (marca, pico, exe))
-        print(
-            "\nAs linhas marcadas IVAO sao as que o servidor mede. Se a voz do IVAO"
-            "\nsai de outro processo, ponha um pedaco do caminho dele em"
-            "\n'audio_process' no config.json."
-        )
+        return [
+            {"exe": exe, "peak": round(pico, 5), "ivao": matches(exe, needles)}
+            for (exe, _), pico in zip(achados, picos)
+        ]
     finally:
         comtypes.CoUninitialize()
+
+
+def list_sessions(cfg: dict, seconds: float = 5.0) -> None:
+    """Mostra quem esta tocando som e quanto, para achar o processo do IVAO."""
+    print("medindo por %.0f s; fale ou espere alguem transmitir no IVAO...\n" % seconds)
+    achados = measure_sessions(cfg.get("audio_process", ["ivao", "altitude"]), seconds)
+    if not achados:
+        print("nenhum programa com som aberto no Windows.")
+        return
+    for s in achados:
+        marca = "IVAO" if s["ivao"] else "    "
+        print("  %s  pico %.4f  %s" % (marca, s["peak"], s["exe"]))
+    print(
+        "\nAs linhas marcadas IVAO sao as que o servidor mede. Se a voz do IVAO"
+        "\nsai de outro processo, ponha um pedaco do caminho dele em"
+        "\n'audio_process' no config.json."
+    )
 
 
 def meter(cfg: dict) -> None:

@@ -47,19 +47,28 @@ log = logging.getLogger("server")
 logging.getLogger("SimConnect").setLevel(logging.CRITICAL)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
+DATA = Path(os.environ.get("APPDATA", Path.home())) / "COM Radio"
+
 if getattr(sys, "frozen", False):
-    # no .exe a interface vem empacotada; config, certificados e log ficam ao
-    # lado do executavel, onde o usuario consegue editar
+    # instalado em Arquivos de Programas, que nao aceita escrita: config e log
+    # vao para a pasta de dados. Na primeira abertura o config vem do .exe
+    # portatil antigo, se houver um ao lado, ou do padrao empacotado
     ROOT = Path(sys._MEIPASS)
-    HOME = Path(sys.executable).parent
+    HOME = DATA
+    if not (HOME / "config.json").exists():
+        HOME.mkdir(parents=True, exist_ok=True)
+        for origem in (Path(sys.executable).parent / "config.json", ROOT / "config.json"):
+            if origem.exists():
+                (HOME / "config.json").write_bytes(origem.read_bytes())
+                break
 else:
     # o codigo mora em app/, o config.json na raiz do repositorio
     ROOT = Path(__file__).parent
     HOME = ROOT.parent
-CFG =json.loads((HOME / "config.json").read_text(encoding="utf-8"))
+CFG = json.loads((HOME / "config.json").read_text(encoding="utf-8"))
 # um lugar so para o .exe e o 'py app/server.py': o iPhone confia em uma CA, e
 # duas pastas gerariam duas CAs diferentes
-CERTS = Path(os.environ.get("APPDATA", HOME)) / "COM Radio" / "certs"
+CERTS = DATA / "certs"
 PORT = int(CFG.get("port", 8443))
 SETUP_PORT = int(CFG.get("setup_port", 8080))
 
@@ -176,19 +185,32 @@ def set_ptt_key(name: str) -> str | None:
     KEY = HUB.key = nova
     # o celular pode ter apertado entre a checagem e a troca
     antiga.force_release("tecla de PTT trocada")
-    CFG["ptt_key"] = nova.name
     log.info("PTT agora na tecla '%s'", nova.name)
+    erro = save_config("ptt_key", nova.name)
+    return "tecla trocada, mas " + erro if erro else None
 
+
+def save_config(key: str, value) -> str | None:
+    """Grava uma chave no config.json. Devolve o erro para mostrar, ou None.
+
+    Troca so o valor daquela chave, para nao reformatar o arquivo que o
+    usuario edita a mao. Chave que ainda nao existe reescreve o arquivo.
+    """
+    CFG[key] = value
     path = HOME / "config.json"
     try:
         texto = path.read_text(encoding="utf-8")
-        # so a linha da tecla, para nao reformatar o arquivo que o usuario edita
         novo, achou = re.subn(
-            r'("ptt_key"\s*:\s*)"[^"]*"', lambda m: m.group(1) + json.dumps(nova.name), texto
+            r'("%s"\s*:\s*)(?:"[^"]*"|\[[^\]]*\]|[^,\s}]+)' % re.escape(key),
+            lambda m: m.group(1) + json.dumps(value, ensure_ascii=False),
+            texto,
+            count=1,
         )
-        path.write_text(novo if achou else json.dumps(CFG, indent=2), encoding="utf-8")
+        path.write_text(
+            novo if achou else json.dumps(CFG, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
     except OSError as exc:
-        return "tecla trocada, mas não consegui salvar o config.json: %s" % exc
+        return "não consegui salvar o config.json: %s" % exc
     return None
 
 

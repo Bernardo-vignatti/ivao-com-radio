@@ -1,13 +1,22 @@
+/* Rádio de painel no estilo de um KX155: placa preta fosca com parafusos,
+   legendas brancas impressas, display de descarga de gás em âmbar com os
+   segmentos apagados aparecendo por trás, e botão giratório duplo. Tudo em
+   CSS e SVG, sem imagens, para abrir na hora e funcionar sem o PC. */
+
 :root {
-  --void: #0A0D0E;
-  --face: #141A1C;
-  --face-hi: #1D2528;
-  --bezel: #293134;
-  --legend: #7F8D93;
-  --amber: #FFA524;
-  --amber-dim: #96601A;
+  --void: #0A0B0C;
+  --plate: #1C1E20;
+  --plate-hi: #26292C;
+  --plate-lo: #141618;
+  --print: #E9ECEE;
+  --print-dim: #8D969B;
+  --glass: #070605;
+  --amber: #FF9A1F;
+  --amber-glow: rgba(255, 140, 20, 0.55);
+  --ghost: rgba(255, 150, 40, 0.07);
   --phosphor: #62E39B;
   --tx: #FF4B2B;
+  --bezel: #2B2F32;
   --frame: var(--bezel);
 }
 
@@ -19,8 +28,10 @@ html, body {
 }
 
 body {
-  background: var(--void);
-  color: #E4EAEC;
+  background:
+    radial-gradient(120% 60% at 50% 0%, #15171A 0%, transparent 70%),
+    var(--void);
+  color: var(--print);
   font-family: "B612", system-ui, sans-serif;
   -webkit-user-select: none;
   user-select: none;
@@ -29,13 +40,18 @@ body {
   touch-action: manipulation;
 }
 
+button { font-family: inherit; color: inherit; }
+
+/* a moldura da tela e o anunciador: verde quando alguem transmite,
+   vermelha quando e voce. Tem que ser legivel pelo canto do olho */
 .annunciator {
   position: fixed;
   inset: 0;
   border: 5px solid var(--frame);
+  box-shadow: inset 0 0 22px -6px var(--frame);
   pointer-events: none;
   z-index: 10;
-  transition: border-color 60ms linear;
+  transition: border-color 60ms linear, box-shadow 60ms linear;
 }
 
 main {
@@ -43,130 +59,312 @@ main {
   flex-direction: column;
   gap: 10px;
   height: 100%;
-  padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 12px);
+  padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
 }
 
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 15px;
+/* ------------------------------------------------------------ placa */
+
+.plate {
+  position: relative;
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, var(--plate-hi), var(--plate) 18%, var(--plate-lo));
+  border: 1px solid #000;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
-.ident { display: flex; align-items: center; gap: 8px; }
-
-.lamp {
-  width: 8px; height: 8px;
+.screw {
+  position: absolute;
+  width: 9px; height: 9px;
   border-radius: 50%;
-  background: var(--tx);
-  transition: background 120ms linear;
+  background:
+    linear-gradient(var(--rot, 35deg), transparent 42%, rgba(0, 0, 0, 0.75) 42% 58%, transparent 58%),
+    radial-gradient(circle at 35% 30%, #9AA0A4, #4A4F53 60%, #2A2D30);
+  box-shadow: 0 1px 1px rgba(255, 255, 255, 0.08), inset 0 0 1px #000;
 }
-.lamp.on { background: var(--phosphor); }
+.screw.tl { top: 6px; left: 6px; }
+.screw.tr { top: 6px; right: 6px; --rot: 110deg; }
+.screw.bl { bottom: 6px; left: 6px; --rot: 160deg; }
+.screw.br { bottom: 6px; right: 6px; --rot: 75deg; }
 
-time {
-  font-family: "B612 Mono", ui-monospace, monospace;
-  font-size: 14px;
-  color: var(--legend);
+.print {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--print);
 }
+.print.dim { color: var(--print-dim); font-weight: 400; }
 
-.radio {
-  background: var(--face);
-  border: 1px solid var(--bezel);
-  border-top: 2px solid var(--frame);
-  padding: 12px 14px 10px;
-  transition: border-top-color 60ms linear;
-}
+/* ------------------------------------------------------------ anunciadores */
 
-.stack {
+.strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(6px, 2.4vw, 12px);
+  gap: 8px;
 }
 
-.slot { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.slot.right { align-items: flex-end; }
+.lamps { display: flex; gap: 6px; }
 
-.legend {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--legend);
+.ann {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: #111315;
+  border: 1px solid #000;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.05);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: #5E676C;
+  transition: color 150ms;
 }
+.ann i {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #3A2220;
+  box-shadow: inset 0 0 2px #000;
+  transition: background 150ms, box-shadow 150ms;
+}
+.ann.on { color: var(--print); }
+.ann.on i { background: var(--phosphor); box-shadow: 0 0 7px var(--phosphor); }
+.ann.warn { color: var(--print); }
+.ann.warn i { background: var(--amber); box-shadow: 0 0 7px var(--amber); }
+.ann.bad i { background: var(--tx); box-shadow: 0 0 7px var(--tx); }
 
-.freq {
-  font-family: "B612 Mono", ui-monospace, monospace;
-  font-variant-numeric: tabular-nums;
-  /* as duas frequencias mais o botao de troca precisam caber num iPhone de
-     320 px sem cortar o standby, entao o corpo acompanha a largura da tela */
-  font-size: clamp(17px, 5.6vw, 24px);
-  color: var(--amber-dim);
-  line-height: 1.05;
+.tag-plate {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font: 700 13px "B612 Mono", monospace;
+  letter-spacing: 0.08em;
+  color: var(--print);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.freq.big {
-  font-size: clamp(29px, 9.6vw, 40px);
-  font-weight: 700;
+.lcd {
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #0B0D0C;
+  border: 1px solid #000;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9);
+  font: 13px "B612 Mono", ui-monospace, monospace;
   color: var(--amber);
-  letter-spacing: -0.01em;
+  text-shadow: 0 0 6px var(--amber-glow);
 }
 
-.swap {
-  width: clamp(40px, 11vw, 46px);
-  height: clamp(40px, 11vw, 46px);
-  flex: none;
-  background: var(--face-hi);
-  border: 1px solid var(--bezel);
-  color: var(--legend);
-  display: grid;
-  place-items: center;
-}
-.swap:active { background: var(--bezel); color: var(--amber); }
+/* ------------------------------------------------------------ radio */
 
-.pills {
+.radio { padding: 12px 12px 14px; }
+
+.glass {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px 8px;
+  padding: 10px 12px 8px;
+  border-radius: 6px;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 35%),
+    var(--glass);
+  border: 1px solid #000;
+  box-shadow:
+    inset 0 0 0 3px #101112,
+    inset 0 3px 14px rgba(0, 0, 0, 0.95),
+    0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.slot { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.slot.right { align-items: flex-end; }
+
+.legend {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  opacity: 0.75;
+  text-shadow: 0 0 5px var(--amber-glow);
+}
+
+/* digitos de sete segmentos desenhados em SVG pelo app.js */
+.seg7 {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.09em;
+  height: clamp(26px, 7.4vw, 32px);
+  transform: skewX(-6deg);
+  filter: drop-shadow(0 0 3px var(--amber-glow));
+}
+.seg7.big { height: clamp(40px, 12vw, 52px); }
+.seg7 svg { height: 100%; width: auto; overflow: visible; }
+.seg7 .s { fill: var(--ghost); transition: fill 40ms linear; }
+.seg7 .s.on { fill: var(--amber); }
+.seg7 .dp { width: auto; height: 100%; }
+
+.glass-foot {
+  flex-basis: 100%;
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 10px;
+  height: 16px;
+  margin-top: 4px;
 }
 
-.pill {
-  font-family: "B612 Mono", ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  padding: 3px 8px;
-  background: var(--face-hi);
-  color: #5D686C;
+.flag {
+  font: 700 10px "B612 Mono", monospace;
+  letter-spacing: 0.08em;
+  color: var(--ghost);
+  transition: color 60ms linear;
 }
-.pill.rx { background: var(--phosphor); color: #062012; }
-.pill.tx { background: var(--tx); color: #2A0800; }
+.flag.on { color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); }
+#flag-tx.on { color: var(--tx); text-shadow: 0 0 6px rgba(255, 75, 43, 0.7); }
+#flag-rx.on { color: var(--phosphor); text-shadow: 0 0 6px rgba(98, 227, 155, 0.7); }
 
-.spacer { flex: 1; }
-
-.ghost {
-  font-family: inherit;
-  font-size: 12px;
-  padding: 4px 12px;
-  background: transparent;
-  border: 1px solid var(--bezel);
-  color: var(--legend);
+.msg {
+  flex: 1;
+  min-width: 0;
+  font: 10px "B612 Mono", monospace;
+  color: var(--amber);
+  text-shadow: 0 0 6px var(--amber-glow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.ghost:active { background: var(--face-hi); }
 
-.pad {
-  background: var(--face);
-  border: 1px solid var(--bezel);
-  padding: 10px;
+/* barra de sinal segmentada: o nivel do audio do IVAO */
+.signal { display: flex; gap: 2px; align-items: flex-end; height: 11px; }
+.signal i {
+  width: 3px;
+  background: var(--ghost);
+  border-radius: 1px;
 }
+.signal i.on { background: var(--phosphor); box-shadow: 0 0 4px rgba(98, 227, 155, 0.6); }
+
+/* ------------------------------------------------------------ controles */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 0 4px;
+}
+
+.keys-col { display: flex; flex-direction: column; gap: 8px; }
+
+/* tecla de borracha com legenda branca, como as do painel */
+.hw {
+  width: 58px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1px solid #000;
+  background: linear-gradient(180deg, #34383B, #222528 55%, #1B1D1F);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 0 #0B0C0D,
+    0 3px 6px rgba(0, 0, 0, 0.6);
+  color: var(--print);
+  transition: transform 40ms, box-shadow 40ms;
+}
+.hw.word { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; }
+.hw:active, .hw.on {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 0 #0B0C0D;
+}
+.hw.on { color: var(--amber); }
+
+.legend-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.legend-block .hint { margin-top: 6px; font-size: 9px; letter-spacing: 0.08em; line-height: 1.3; }
+
+/* botao giratorio duplo: anel de fora em MHz, miolo em kHz */
+.knob-wrap {
+  position: relative;
+  width: clamp(104px, 30vw, 120px);
+  aspect-ratio: 1;
+  flex: none;
+}
+.knob-label {
+  position: absolute;
+  top: -2px;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--print-dim);
+}
+.knob-label.l { left: -4px; }
+.knob-label.r { right: -4px; }
+
+.knob {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  touch-action: none;
+  background: radial-gradient(circle, #0D0E0F 62%, transparent 63%);
+}
+.knob-outer, .knob-inner {
+  position: absolute;
+  border-radius: 50%;
+  transform: rotate(var(--a, 0deg));
+}
+.knob-outer {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 57%, rgba(0, 0, 0, 0.6) 58%, transparent 60%),
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.16), transparent 55%),
+    repeating-conic-gradient(#2E3236 0 5deg, #17191B 5deg 10deg);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px #000,
+    inset 0 2px 2px rgba(255, 255, 255, 0.1);
+}
+.knob-inner {
+  inset: 25%;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.2), transparent 55%),
+    repeating-conic-gradient(#33373B 0 8deg, #1A1C1E 8deg 16deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), inset 0 0 0 1px #000, inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+.mark {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  width: 2px; height: 14%;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--print);
+}
+.knob-inner .mark { height: 22%; top: 6%; }
+
+/* ------------------------------------------------------------ teclado */
+
+.pad { padding: 12px; }
 
 .padval {
-  font-family: "B612 Mono", ui-monospace, monospace;
-  font-size: 26px;
+  padding: 6px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: var(--glass);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.9);
+  font: 26px "B612 Mono", monospace;
   text-align: center;
   color: var(--amber);
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
+  text-shadow: 0 0 8px var(--amber-glow);
+  letter-spacing: 0.06em;
 }
 
 .paderr {
@@ -179,58 +377,115 @@ time {
 .keys {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 7px;
 }
-
-.keys button {
-  font-family: "B612 Mono", ui-monospace, monospace;
-  font-size: 20px;
-  padding: 13px 0;
-  background: var(--face-hi);
-  border: 1px solid var(--bezel);
-  color: #E4EAEC;
+.keys .hw {
+  width: auto;
+  height: 46px;
+  font: 20px "B612 Mono", monospace;
 }
-.keys button.word { font-family: "B612", sans-serif; font-size: 13px; }
-.keys button:active { background: var(--bezel); }
+.keys .hw.word { font: 700 11px "B612", sans-serif; letter-spacing: 0.14em; }
 
-.ptt {
+/* ------------------------------------------------------------ PTT */
+
+.ptt-well {
   flex: 1;
   min-height: 150px;
+  display: flex;
+  padding: 7px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #0C0D0E, #16181A);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.ptt {
+  position: relative;
+  flex: 1;
   width: 100%;
-  background: var(--face);
-  border: 2px solid var(--bezel);
-  color: var(--legend);
-  font-family: inherit;
+  border-radius: 16px;
+  border: 1px solid #000;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 60%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #2A2D30, #1C1E20 60%, #17191A);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 5px 0 #070808,
+    0 8px 14px rgba(0, 0, 0, 0.6);
+  color: var(--print-dim);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
   touch-action: none;
-  transition: background 50ms linear, color 50ms linear, border-color 50ms linear;
+  transition: transform 50ms linear, box-shadow 50ms linear, background 60ms linear, color 60ms linear;
 }
 
-.ptt-label { font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; }
-.ptt-sub { font-size: 13px; opacity: 0.65; }
+.ptt-led {
+  width: 12px; height: 12px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: #2A1A18;
+  box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: background 60ms linear, box-shadow 60ms linear;
+}
+.ptt-label { font-size: 20px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--print); }
+.ptt-sub { font-size: 13px; opacity: 0.75; }
+.ptt-key {
+  position: absolute;
+  bottom: 10px;
+  font: 10px "B612 Mono", monospace;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
 
-.ptt.rx { background: var(--phosphor); border-color: var(--phosphor); color: #062012; }
-.ptt.tx { background: var(--tx); border-color: var(--tx); color: #2A0800; }
+.ptt.rx {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.25), transparent 60%),
+    linear-gradient(180deg, #74EBA8, var(--phosphor) 60%, #4CC985);
+  color: #0A2A18;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 5px 0 #1D5E3A, 0 0 30px rgba(98, 227, 155, 0.35);
+}
+.ptt.rx .ptt-label { color: #062012; }
+.ptt.rx .ptt-led { background: #E8FFF1; box-shadow: 0 0 10px #fff; }
+
+/* apertado: o botao afunda e acende */
+.ptt.tx {
+  transform: translateY(4px);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.2), transparent 60%),
+    linear-gradient(180deg, #FF6A4E, var(--tx) 60%, #DB3A1C);
+  color: #2A0800;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 1px 0 #6E1B0B, 0 0 34px rgba(255, 75, 43, 0.45);
+}
+.ptt.tx .ptt-label { color: #2A0800; }
+.ptt.tx .ptt-led { background: #FFE9E2; box-shadow: 0 0 12px #fff; }
 .ptt.off { opacity: 0.35; }
 
-.atc { display: flex; flex-direction: column; min-height: 0; flex: 1.1; }
+/* ------------------------------------------------------------ ATC */
+
+.atc {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1.1;
+  padding: 10px 10px 8px;
+}
 
 .atc-head {
   display: flex;
   justify-content: space-between;
-  padding: 0 2px 6px;
+  padding: 0 4px 7px;
 }
 
 .atc-list {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--bezel);
-  background: var(--face);
+  border-radius: 6px;
+  background: #0E0F10;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 .row {
@@ -241,73 +496,61 @@ time {
   padding: 9px 11px;
   background: transparent;
   border: 0;
-  border-top: 1px solid var(--bezel);
-  color: #E4EAEC;
-  font-family: inherit;
+  border-top: 1px solid #1C1F21;
   text-align: left;
 }
 .row:first-child { border-top: 0; }
-.row:active { background: var(--face-hi); }
+.row:active { background: #1A1D1F; }
 
 .row .cs { flex: 1; min-width: 0; }
-.row .cs b { font-weight: 400; font-size: 15px; display: block; }
-.row .cs small { font-size: 11px; color: var(--legend); }
+.row .cs b { font-weight: 700; font-size: 14px; display: block; color: var(--print); letter-spacing: 0.02em; }
+.row .cs small { font-size: 11px; color: var(--print-dim); }
 
 .row .rf {
-  font-family: "B612 Mono", ui-monospace, monospace;
-  font-size: 16px;
-  color: var(--amber-dim);
+  font: 16px "B612 Mono", ui-monospace, monospace;
+  color: var(--amber);
+  opacity: 0.8;
+  text-shadow: 0 0 6px var(--amber-glow);
+}
+.row.tuned .rf { opacity: 1; }
+.row.tuned .cs b::after {
+  content: " ●";
+  font-size: 9px;
+  color: var(--phosphor);
+  vertical-align: 2px;
 }
 
 .empty, .error {
   padding: 14px;
   font-size: 13px;
-  color: var(--legend);
+  color: var(--print-dim);
   text-align: center;
 }
 .error { color: var(--tx); }
 
-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #5D686C;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-}
-
 /* aviso de servico fora do ar: SimConnect, audio ou Whazzup */
 .alert {
+  position: relative;
   font-size: 12px;
   line-height: 1.35;
-  padding: 8px 11px;
-  background: #2A1310;
-  border-left: 3px solid var(--tx);
-  color: #F3C8BF;
-}
-
-/* nivel do audio que chega do Altitude. Serve para conferir o roteamento
-   do VB-Cable sem levantar do assento e olhar o PC. */
-.meter {
-  height: 3px;
-  margin-top: 8px;
-  background: var(--face-hi);
+  padding: 8px 11px 8px 16px;
+  border-radius: 6px;
+  background: #2A1A0C;
+  border: 1px solid #000;
+  color: #FFD9A8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
-.meter span {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: var(--phosphor);
-  transition: width 80ms linear;
+.alert::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+  background: repeating-linear-gradient(45deg, var(--amber) 0 4px, #000 4px 8px);
 }
 
-footer span + span { text-align: right; }
-footer span:nth-child(2) { text-align: center; flex: 1; }
+/* ------------------------------------------------------------ espera */
 
-/* tela de espera: cobre tudo enquanto o WebSocket nao conecta */
 .waiting {
   position: fixed;
   inset: 0;
@@ -322,12 +565,14 @@ footer span:nth-child(2) { text-align: center; flex: 1; }
   text-align: center;
 }
 .waiting[hidden] { display: none; }
+.waiting .plate { width: min(100%, 360px); padding: 14px; margin-bottom: 14px; }
+.waiting .seg7 { filter: none; }
 .waiting h1 {
-  font: 700 clamp(24px, 7vw, 30px) "B612 Mono", monospace;
+  font: 700 clamp(22px, 6.6vw, 28px) "B612 Mono", monospace;
   color: var(--amber);
   letter-spacing: 0.04em;
 }
-.waiting p { color: var(--legend); font-size: 15px; line-height: 1.5; }
+.waiting p { color: var(--print-dim); font-size: 15px; line-height: 1.5; }
 .wait-lamp {
   width: 14px; height: 14px;
   border-radius: 50%;
@@ -336,4 +581,8 @@ footer span:nth-child(2) { text-align: center; flex: 1; }
   animation: pulse 1.6s ease-in-out infinite;
 }
 @keyframes pulse { 50% { opacity: 0.25; box-shadow: none; } }
-@media (prefers-reduced-motion: reduce) { .wait-lamp { animation: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+  .wait-lamp { animation: none; }
+}

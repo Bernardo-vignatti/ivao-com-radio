@@ -17,5 +17,7 @@
   "whazzup_enabled": true,
   "whazzup_interval_s": 15,
   "whazzup_radius_nm": 250,
-  "whazzup_max_stations": 12
+  "whazzup_max_stations": 12,
+
+  "tray_on_close": true
 }

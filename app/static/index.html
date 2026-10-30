@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="COM">
-<meta name="theme-color" content="#0A0D0E">
+<meta name="theme-color" content="#0A0B0C">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="apple-touch-icon" href="/static/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,75 +19,106 @@
 
 <div class="annunciator" id="frame"></div>
 
+<!-- sem PC: o radio aparece desligado, com o display apagado -->
 <div class="waiting" id="waiting">
+  <div class="plate off">
+    <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
+    <div class="glass">
+      <div class="seg7 big" data-ghost></div>
+      <div class="seg7" data-ghost></div>
+    </div>
+  </div>
   <span class="wait-lamp"></span>
   <h1>Aguardando o PC</h1>
-  <p>Abra o COM Radio no computador.<br>O rádio aparece aqui sozinho.</p>
+  <p>Abra o COM Radio no computador.<br>O rádio liga aqui sozinho.</p>
 </div>
 
 <main>
 
-  <header>
-    <div class="ident">
-      <span class="lamp" id="lamp"></span>
-      <span id="callsign">&mdash;</span>
+  <!-- painel de anunciadores: as tres pontas e o relogio -->
+  <header class="strip">
+    <div class="lamps">
+      <span class="ann" id="ann-pc"><i></i>PC</span>
+      <span class="ann" id="ann-sim"><i></i>MSFS</span>
+      <span class="ann" id="ann-aud"><i></i>ÁUDIO</span>
     </div>
-    <time id="utc">--:--z</time>
+    <span class="tag-plate" id="callsign">—</span>
+    <time class="lcd" id="utc">--:--z</time>
   </header>
 
   <p class="alert" id="alert" hidden></p>
 
-  <section class="radio" id="radio">
-    <div class="stack">
+  <!-- a unidade do radio -->
+  <section class="plate radio" id="radio">
+    <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
+
+    <div class="glass">
       <div class="slot">
-        <span class="legend">ativa</span>
-        <span class="freq big" id="active">---.---</span>
+        <span class="legend">USE</span>
+        <div class="seg7 big" id="active"></div>
       </div>
-      <button class="swap" id="swap" aria-label="Trocar ativa e standby">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/>
-        </svg>
-      </button>
       <div class="slot right">
-        <span class="legend">standby</span>
-        <span class="freq" id="standby">---.---</span>
+        <span class="legend">STBY</span>
+        <div class="seg7" id="standby"></div>
+      </div>
+      <div class="glass-foot">
+        <span class="flag" id="flag-tx">TX</span>
+        <span class="flag" id="flag-rx">RX</span>
+        <span class="flag" id="flag-833">8.33</span>
+        <span class="msg" id="msg"></span>
+        <span class="signal" id="signal"></span>
       </div>
     </div>
-    <div class="pills">
-      <span class="pill" id="pill-rx">RX</span>
-      <span class="pill" id="pill-tx">TX</span>
-      <span class="spacer"></span>
-      <button class="ghost" id="padtoggle">digitar</button>
+
+    <div class="controls">
+      <div class="keys-col">
+        <button class="hw" id="swap" aria-label="Trocar ativa e standby">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/>
+          </svg>
+        </button>
+        <button class="hw word" id="padtoggle">FREQ</button>
+      </div>
+      <div class="legend-block">
+        <span class="print">COMM</span>
+        <span class="print dim">VHF 118–137</span>
+        <span class="print dim hint">gire para<br>sintonizar</span>
+      </div>
+      <div class="knob-wrap">
+        <span class="knob-label l">MHz</span>
+        <span class="knob-label r">kHz</span>
+        <div class="knob" id="knob" aria-label="Botão de sintonia">
+          <div class="knob-outer" id="knob-outer"><i class="mark"></i></div>
+          <div class="knob-inner" id="knob-inner"><i class="mark"></i></div>
+        </div>
+      </div>
     </div>
-    <div class="meter"><span id="meterbar"></span></div>
   </section>
 
-  <section class="pad" id="pad" hidden>
+  <section class="plate pad" id="pad" hidden>
     <div class="padval" id="padval">___.___</div>
     <p class="paderr" id="paderr" hidden>fora da faixa 118.000 – 136.975</p>
     <div class="keys" id="keys"></div>
   </section>
 
-  <button class="ptt" id="ptt" aria-label="Apertar para falar">
-    <span class="ptt-label" id="pttlabel">ouvindo</span>
-    <span class="ptt-sub" id="pttsub">segure para falar</span>
-  </button>
+  <div class="ptt-well">
+    <button class="ptt" id="ptt" aria-label="Apertar para falar">
+      <span class="ptt-led"></span>
+      <span class="ptt-label" id="pttlabel">ouvindo</span>
+      <span class="ptt-sub" id="pttsub">segure para falar</span>
+      <span class="ptt-key" id="pttkey"></span>
+    </button>
+  </div>
 
-  <section class="atc">
+  <section class="plate atc">
     <div class="atc-head">
-      <span class="legend">ATC online por perto</span>
-      <span class="legend" id="atccount">–</span>
+      <span class="print">ATC ONLINE</span>
+      <span class="print dim" id="atccount">–</span>
     </div>
     <div class="atc-list" id="atclist">
       <p class="empty">procurando controladores…</p>
     </div>
   </section>
-
-  <footer>
-    <span id="link">conectando…</span>
-    <span id="audiostat">áudio –</span>
-    <span id="pttkey"></span>
-  </footer>
 
 </main>
 

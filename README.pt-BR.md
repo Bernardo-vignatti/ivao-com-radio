@@ -7,21 +7,22 @@
 
 **[Read in English](README.md)**
 
-O COM transforma o iPhone num rádio de cockpit para voar na rede IVAO com o
-Microsoft Flight Simulator: um botão grande de PTT, frequência ativa e
-standby com botão de troca, e a lista de ATC online por perto, ordenada por
-distância. Tocar num controlador manda a frequência dele para o standby, como
-num rádio de verdade.
+O COM transforma o iPhone num rádio comm de painel para voar na rede IVAO com
+o Microsoft Flight Simulator: display no estilo de descarga de gás com
+frequência ativa e standby, botão de troca, botão giratório duplo, um botão
+grande de PTT e a lista de ATC online por perto, ordenada por distância.
+Tocar num controlador manda a frequência dele para o standby, como num rádio
+de verdade.
 
 O áudio e o microfone continuam no PC. O celular é só o painel.
 
 <p align="center">
-  <img src="docs/radio.png" width="250" alt="Tela do rádio com alguém transmitindo: moldura verde, ativa 122.800, standby 118.700, lista de ATC por perto">
+  <img src="docs/radio.png" width="250" alt="Tela do rádio com alguém transmitindo: moldura verde, display de sete segmentos com ativa 122.800 e standby 118.700, botão giratório, PTT verde, lista de ATC por perto">
   &nbsp;
-  <img src="docs/waiting.png" width="250" alt="Tela de espera, mostrada quando o app do PC está fechado">
+  <img src="docs/waiting.png" width="250" alt="Tela de espera, mostrada quando o app do PC está fechado: o display do rádio apagado">
 </p>
 <p align="center">
-  <img src="docs/pc-window.png" width="400" alt="Janela do app no PC com luzes de estado e QR code para instalar no iPhone">
+  <img src="docs/pc-window.png" width="600" alt="Painel do app no PC com cards de estado, espelho do rádio, gráfico do áudio do IVAO e ATC por perto">
 </p>
 
 ## O que faz
@@ -30,7 +31,9 @@ O áudio e o microfone continuam no PC. O celular é só o painel.
   o botão apertado, o PC solta a tecla em 700 ms, e você nunca fica
   transmitindo sem querer.
 - **Frequência ativa e standby** lidas e escritas no simulador. Troca como no
-  rádio real, com canais de 8.33 kHz.
+  rádio real. O standby se sintoniza pelo botão giratório duplo (anel de fora
+  em MHz, miolo em kHz; um toque no miolo liga os canais de 8.33 kHz) ou pelo
+  teclado numérico.
 - **ATC por perto**, pelos dados públicos da IVAO, ordenado pela distância do
   seu avião. Tocar num controlador carrega a frequência no standby.
 - **Indicador de recepção.** A moldura inteira da tela fica verde quando
@@ -41,6 +44,10 @@ O áudio e o microfone continuam no PC. O celular é só o painel.
   aparece sozinho.
 - **Sem configurar som.** Sem cabo virtual e sem roteamento: o COM observa o
   volume do IVAO no mixer do Windows para saber quando alguém está falando.
+- **Painel no PC, na bandeja do sistema.** Uma janela mostra o estado de cada
+  parte, um gráfico do áudio ao vivo para ajustar o squelch, a tecla de PTT e
+  todas as configurações. Fechar a janela deixa o COM rodando na bandeja; para
+  sair, use o menu da bandeja.
 
 ## Como funciona
 
@@ -78,20 +85,23 @@ iPhone uma vez.
 
 ## Começo rápido
 
-1. Baixe o `COM-Radio-windows.zip` da
-   [última release](../../releases/latest) e extraia onde quiser.
-2. Abra o `COM Radio.exe`.
-   - O exe não tem assinatura digital, então o SmartScreen do Windows pode
-     avisar na primeira vez: clique em **Mais informações › Executar assim
-     mesmo**.
-   - O Firewall do Windows vai perguntar sobre a rede: libere em **Redes
-     privadas**, senão o iPhone não alcança o PC.
-3. **Defina a tecla de PTT:** clique em **Mudar** na linha do PTT da janela e
-   aperte a tecla ou o botão do mouse que você usa como PTT na IVAO. O COM
-   reconhece e salva sozinho; não precisa saber o nome da tecla.
-4. **No iPhone, uma vez só:** aponte a câmera para o QR code da janela (ou
-   abra no Safari o endereço `http://…:8080` que ela mostra) e siga os quatro
-   passos da página:
+1. Baixe o `COM-Radio-Setup-<versão>.exe` da
+   [última release](../../releases/latest) e abra. Ele instala o COM em
+   Arquivos de Programas, cria os atalhos, libera o COM nas redes
+   **privadas** do Firewall do Windows (senão o iPhone não alcança o PC) e
+   instala o WebView2 da Microsoft se faltar. Para desinstalar, use as
+   Configurações do Windows como em qualquer programa.
+   - O instalador não tem assinatura digital, então o SmartScreen do Windows
+     pode avisar na primeira vez: clique em **Mais informações › Executar
+     assim mesmo**.
+   - O seu Wi-Fi precisa estar marcado como rede **privada** no Windows.
+2. Abra o **COM Radio** pelo menu Iniciar.
+3. **Defina a tecla de PTT:** na página **Tecla PTT**, clique em **Mudar
+   tecla** e aperte a tecla ou o botão do mouse que você usa como PTT na IVAO.
+   O COM reconhece e salva sozinho; não precisa saber o nome da tecla.
+4. **No iPhone, uma vez só:** na página **iPhone**, aponte a câmera para o QR
+   code (ou abra no Safari o endereço `http://…:8080` que ela mostra) e siga
+   os quatro passos da página:
    1. baixe o certificado;
    2. instale em **Ajustes › Perfil Transferido**;
    3. ligue em **Ajustes › Geral › Sobre › Ajustes de Confiança de
@@ -102,23 +112,33 @@ iPhone uma vez.
 Daí em diante: abra a IVAO, abra o COM, toque no ícone COM no celular e voe.
 
 O certificado fica em `%APPDATA%\COM Radio\certs`. Não apague essa pasta: sem
-ela, o PC cria outro certificado e o iPhone precisa repetir o passo 4.
+ela, o PC cria outro certificado e o iPhone precisa repetir o passo 4. Ao
+desinstalar, o COM pergunta antes de apagar.
+
+Vindo da versão antiga em zip? Copie o `config.json` antigo para
+`%APPDATA%\COM Radio\` antes de abrir a nova, ou só defina a tecla de novo.
 
 ## Configuração
 
-Tudo fica no `config.json`, ao lado do exe.
+Tudo se muda pela janela: a página **Áudio** tem os controles do squelch sobre
+um gráfico ao vivo e acha o programa do IVAO para você, e **Configurações**
+tem o resto, inclusive iniciar com o Windows. Fica tudo salvo em
+`%APPDATA%\COM Radio\config.json`, que também dá para editar à mão (com o COM
+fechado).
 
 | Chave | Padrão | O que faz |
 |---|---|---|
-| `ptt_key` | `leftctrl` | Tecla apertada no PTT. O jeito fácil é o botão **Mudar** da janela. À mão: letras, números, `f1` a `f24`, teclas do numpad, modificadoras (`leftctrl`, `rightalt`…) ou botões do mouse `mouseback`, `mouseforward`, `mousemiddle`. Lista completa: `SCANCODES` no `app/ptt.py` |
+| `ptt_key` | `leftctrl` | Tecla apertada no PTT. O jeito fácil é o botão **Mudar tecla** da janela. À mão: letras, números, `f1` a `f24`, teclas do numpad, modificadoras (`leftctrl`, `rightalt`…) ou botões do mouse `mouseback`, `mouseforward`, `mousemiddle`. Lista completa: `SCANCODES` no `app/ptt.py` |
 | `ptt_deadman_ms` | `700` | Solta o PTT se o celular ficar esse tempo sem dar sinal |
 | `audio_process` | `["ivao", "altitude"]` | Qualquer pedaço do caminho do programa cujo volume quer dizer "alguém falando" |
 | `squelch_open` / `squelch_close` | `0.03` / `0.01` | Nível que acende / apaga a luz de recepção |
 | `squelch_hang_ms` | `350` | Segura a luz acesa nas pausas curtas da fala |
 | `whazzup_radius_nm` | `250` | Até que distância procurar ATC |
 | `whazzup_max_stations` | `12` | Quantos controladores listar |
+| `whazzup_interval_s` | `15` | De quanto em quanto tempo pedir a lista de ATC à IVAO (no mínimo 15) |
 | `port` / `setup_port` | `8443` / `8080` | Rádio (HTTPS) e página de instalação (HTTP) |
 | `sim_enabled`, `audio_enabled`, `whazzup_enabled` | `true` | Desligam uma parte |
+| `tray_on_close` | `true` | Fechar a janela deixa o COM rodando na bandeja |
 
 Dicas para a tecla de PTT:
 
@@ -139,8 +159,8 @@ primeiro a apertar controla o PTT até soltar.
 
 ## Se algo não funcionar
 
-**O PTT não transmite.** Rode `py app/server.py --test-ptt`. Se ele disser que a
-tecla saiu e a IVAO continuar muda, o `ptt_key` não bate com o PTT
+**O PTT não transmite.** Clique em **Testar tecla** na página do PTT. Se ele
+disser que a tecla saiu e a IVAO continuar muda, a tecla não bate com o PTT
 configurado na IVAO. Erro 5 quer dizer que a IVAO ou o simulador rodam como
 administrador e o COM não: abra o COM como administrador também. Com o
 simulador em tela cheia exclusiva, teste em janela sem bordas.
@@ -152,17 +172,20 @@ cockpit; no menu principal o simulador não responde às variáveis do rádio.
 escrita de rádio com a aviônica desligada. O `py app/server.py --test-sim`
 escreve uma frequência, confere se entrou, troca e devolve tudo como estava.
 
-**"Abra o IVAO para ter o indicador de RX" com o IVAO aberto.** Rode
-`py app/server.py --list-audio` com alguém falando na frequência. Ele lista todo
-programa tocando som e o nível de cada um; ponha um pedaço do caminho do
-certo em `audio_process`.
+**"Abra o IVAO para ter o indicador de RX" com o IVAO aberto.** Na página
+**Áudio**, clique em **Procurar programas com som** com alguém falando na
+frequência e escolha o certo em **Usar este**.
 
-**A luz de recepção pisca ou nunca acende.** Rode `py app/server.py --meter`,
-olhe o nível quando alguém fala e ponha `squelch_open` um pouco abaixo dele e
-`squelch_close` mais ou menos na metade. O nível acompanha o volume do IVAO
-no Windows.
+**A luz de recepção pisca ou nunca acende.** Na página **Áudio**, olhe o
+gráfico quando alguém fala e arraste a linha de abrir um pouco abaixo da voz e
+a de fechar mais ou menos na metade. O nível acompanha o volume do IVAO no
+Windows.
 
-**A lista de ATC fica vazia.** Aumente o `whazzup_radius_nm`.
+**A lista de ATC fica vazia.** Aumente o raio de busca em **Configurações**.
+
+**A janela não abre.** O COM pode já estar rodando na bandeja (abrir de novo
+só mostra a janela). Se não for isso, instale o "Edge WebView2 Runtime" da
+Microsoft. O registro fica em `%APPDATA%\COM Radio\com-radio.log`.
 
 ## Rodar pelo código
 
@@ -185,11 +208,18 @@ diagnóstico:
 | `py app/server.py --meter` | Nível de recepção ao vivo, para ajustar o squelch |
 | `py app/server.py --fake-sim` | Roda com um simulador falso, para mexer na interface |
 
-O `build.bat` gera o `dist\COM Radio.exe` com o PyInstaller.
+O `py app/gui.py --fake-sim` abre a janela com o simulador falso.
 
-A interface é HTML, CSS e JavaScript puros em `app/static/`, sem etapa de build.
-A fonte é a [B612](https://b612-font.com/), desenhada pela Airbus para
-displays de cockpit.
+O `build.bat` gera o app com o PyInstaller e depois o instalador
+`dist\COM-Radio-Setup-<versão>.exe` com o [Inno Setup](https://jrsoftware.org/isinfo.php)
+(`winget install JRSoftware.InnoSetup`).
+
+As duas interfaces são HTML, CSS e JavaScript puros, sem etapa de build: o
+rádio do celular em `app/static/` e a janela do PC em `app/desktop/` (mostrada
+pelo [pywebview](https://pywebview.flowrl.com/), que fala com o Python pela
+ponte dele, nunca pela rede). A fonte é a [B612](https://b612-font.com/),
+desenhada pela Airbus para displays de cockpit; os dígitos de sete segmentos
+do celular são desenhados em SVG.
 
 ## Aviso
 
