@@ -339,6 +339,51 @@ $("scan").onclick = async () => {
   }
 };
 
+/* ---------- atualização ---------- */
+
+// o Python procura no GitHub ao abrir; aqui so mostra e confirma. Instalar
+// pede dois cliques: o app fecha e reabre sozinho no fim
+let upd = { state: "idle" };
+let updArmed = false;
+
+function renderUpdate() {
+  const b = $("update-btn");
+  const t = $("update-text");
+  const mb = (n) => (n / 1048576).toFixed(1);
+  b.disabled = ["checking", "downloading", "installing"].includes(upd.state);
+  $("update-pill").hidden = upd.state !== "available";
+  $("update-pill-v").textContent = upd.version ? "v" + upd.version : "";
+  if (upd.state === "available") {
+    t.textContent = upd.error || "A versão " + upd.version + " está disponível (" + mb(upd.size) + " MB).";
+    b.textContent = updArmed ? "Confirmar: fechar e instalar" : "Atualizar para v" + upd.version;
+    b.className = updArmed ? "btn danger" : "btn primary";
+    return;
+  }
+  b.className = "btn";
+  b.textContent = "Procurar atualização";
+  t.textContent = {
+    idle: "Procura versões novas no GitHub.",
+    checking: "Procurando…",
+    current: "Você está na versão mais nova.",
+    error: upd.error,
+    downloading: "Baixando… " + mb(upd.done || 0) + " de " + mb(upd.size) + " MB",
+    installing: "Instalando. O COM Radio vai fechar e abrir de novo sozinho.",
+  }[upd.state] || "";
+}
+
+$("update-btn").onclick = async () => {
+  if (upd.state !== "available") return api.check_update();
+  if (!updArmed) {
+    updArmed = true;
+    renderUpdate();
+    setTimeout(() => { updArmed = false; renderUpdate(); }, 5000);
+    return;
+  }
+  updArmed = false;
+  const r = await api.install_update();
+  if (r.error) toast(r.error, "bad");
+};
+
 /* ---------- início ---------- */
 
 setInterval(() => {
@@ -354,6 +399,8 @@ async function tick() {
   try {
     S = await api.state();
     render(S);
+    upd = await api.update_status();
+    renderUpdate();
   } catch (e) {
     console.error(e);
   } finally {

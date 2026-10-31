@@ -47,6 +47,8 @@ Audio and microphone stay on the PC. The phone is only the panel.
 - **PC dashboard in the system tray.** A window shows each part's status, a
   live audio chart for tuning the squelch, the PTT key and every setting.
   Closing it keeps COM running in the tray; quit from the tray menu.
+- **Updates itself.** When a new version is out on GitHub, the window says so;
+  one click downloads it, checks it, installs it and reopens COM.
 
 ## How it works
 

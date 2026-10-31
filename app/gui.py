@@ -14,14 +14,17 @@ Aqui: --tray abre escondido na bandeja (o que o Iniciar com o Windows usa),
 """
 
 import ctypes
+import hashlib
 import os
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 import winreg
 from pathlib import Path
 
-VERSION = "2.0.0"  # o instalador tem a sua copia em installer.iss
+VERSION = "2.1.0"  # o instalador tem a sua copia em installer.iss
 APP = "COM Radio"
 FROZEN = getattr(sys, "frozen", False)
 DATA = Path(os.environ.get("APPDATA", Path.home())) / APP
@@ -29,6 +32,9 @@ HERE = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 ICON = HERE / "assets" / "icon.ico" if FROZEN else HERE.parent / "assets" / "icon.ico"
 
 CAPTURE_S = 10  # quanto tempo o Mudar espera a tecla
+# de onde vem a atualizacao. Pre-releases contam: quem testa a versao nova
+# tambem recebe a seguinte
+RELEASES = "https://api.github.com/repos/Bernardo-vignatti/ivao-com-radio/releases"
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 if FROZEN:
@@ -63,6 +69,7 @@ if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
 SHOW_EVENT = _k32.CreateEventW(None, False, False, "COMRadio.Show")
 
 try:
+    import httpx
     import pystray
     import qrcode
     import webview
@@ -129,12 +136,48 @@ def qr_svg(url: str) -> str:
     )
 
 
+def version_tuple(tag: str) -> tuple:
+    try:
+        return tuple(int(p) for p in tag.lstrip("vV").split("-")[0].split("."))
+    except ValueError:
+        return ()
+
+
+def find_update() -> dict | None:
+    """A release mais nova que esta, com o instalador anexado, ou None."""
+    r = httpx.get(RELEASES, timeout=10.0, follow_redirects=True,
+                  headers={"Accept": "application/vnd.github+json"})
+    r.raise_for_status()
+    melhor = None
+    for rel in r.json():
+        v = version_tuple(rel.get("tag_name", ""))
+        if rel.get("draft") or not v or v <= version_tuple(VERSION):
+            continue
+        setup = next((a for a in rel.get("assets", [])
+                      if a["name"].startswith("COM-Radio-Setup-") and a["name"].endswith(".exe")), None)
+        if setup and (melhor is None or v > melhor["_v"]):
+            melhor = {
+                "_v": v,
+                "version": rel["tag_name"].lstrip("vV"),
+                "page": rel.get("html_url"),
+                "url": setup["browser_download_url"],
+                "name": setup["name"],
+                "size": setup.get("size", 0),
+                # o GitHub publica o sha256 de cada anexo desde 2025
+                "sha256": (setup.get("digest") or "").removeprefix("sha256:") or None,
+            }
+    if melhor:
+        melhor.pop("_v")
+    return melhor
+
+
 class Api:
     """O que a pagina do PC pode chamar. Nomes com _ nao sao expostos."""
 
     def __init__(self):
         self._capture_until: float | None = None
         self._notice: tuple[str, str, float] | None = None
+        self._update: dict = {"state": "idle"}
 
     def info(self) -> dict:
         return {
@@ -286,6 +329,69 @@ class Api:
     def scan_audio(self) -> list[dict]:
         return server.audio_mod.measure_sessions(server.CFG.get("audio_process", []), 4.0)
 
+    # ---------------------------------------------------------- atualizacao
+
+    def update_status(self) -> dict:
+        return {k: v for k, v in self._update.items() if k not in ("url", "sha256")}
+
+    def check_update(self) -> None:
+        if self._update["state"] in ("checking", "downloading", "installing"):
+            return
+        self._update = {"state": "checking"}
+
+        def run():
+            try:
+                novo = find_update()
+            except Exception as exc:
+                print("atualizacao: %s" % exc)
+                self._update = {"state": "error", "error": "não consegui falar com o GitHub"}
+                return
+            self._update = dict(novo, state="available") if novo else {"state": "current"}
+
+        threading.Thread(target=run, daemon=True, name="atualizacao").start()
+
+    def install_update(self) -> dict:
+        u = self._update
+        if u["state"] != "available":
+            return {"error": "nenhuma atualização disponível"}
+        if not FROZEN:
+            return {"error": "rodando pelo código: atualize com git pull"}
+        # o app fecha para instalar, e fechar com o PTT apertado cortaria a
+        # transmissao no meio. O lifespan soltaria a tecla, mas melhor esperar
+        if server.KEY.is_down or server.HUB.holder is not None:
+            return {"error": "solte o PTT antes de atualizar"}
+        self._update = dict(u, state="downloading", done=0)
+
+        def run():
+            destino = Path(tempfile.gettempdir()) / u["name"]
+            try:
+                h = hashlib.sha256()
+                with httpx.stream("GET", u["url"], timeout=30.0, follow_redirects=True) as r,                         open(destino, "wb") as f:
+                    r.raise_for_status()
+                    for bloco in r.iter_bytes(1 << 16):
+                        f.write(bloco)
+                        h.update(bloco)
+                        self._update["done"] = self._update.get("done", 0) + len(bloco)
+                if u.get("sha256") and h.hexdigest() != u["sha256"].lower():
+                    raise ValueError("o arquivo baixado não confere com o do GitHub")
+            except Exception as exc:
+                print("atualizacao: %s" % exc)
+                destino.unlink(missing_ok=True)
+                self._update = dict(u, state="available", error="o download falhou: %s" % exc)
+                return
+            self._update = dict(u, state="installing")
+            # o instalador recusa rodar com o app aberto (AppMutex), entao ele
+            # espera uns segundos o app sair. /SILENT so mostra o progresso, e
+            # o instalador reabre o app no fim
+            subprocess.Popen(
+                'cmd /c ping -n 4 127.0.0.1 >nul & start "" "%s" /SILENT /NORESTART' % destino,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+            quit_app()
+
+        threading.Thread(target=run, daemon=True, name="atualizacao").start()
+        return {"error": None}
+
     def open_data(self) -> None:
         os.startfile(server.HOME)
 
@@ -373,10 +479,11 @@ TRAY = pystray.Icon(
     ),
 )
 
+API = Api()
 WINDOW = webview.create_window(
     APP,
     url=str(HERE / "desktop" / "index.html"),
-    js_api=Api(),
+    js_api=API,
     width=1180,
     height=760,
     min_size=(980, 660),
@@ -390,6 +497,8 @@ WINDOW.events.shown += on_shown
 if __name__ == "__main__":
     threading.Thread(target=TRAY.run, daemon=True, name="bandeja").start()
     threading.Thread(target=watch, daemon=True, name="vigia").start()
+    if FROZEN:
+        API.check_update()
     webview.start(gui="edgechromium", debug="--debug" in sys.argv)
     # a janela fechou de vez: o mesmo desligamento do Ctrl+C. O lifespan
     # solta a tecla e fecha simulador e audio antes de o processo sair

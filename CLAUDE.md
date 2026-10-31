@@ -233,6 +233,16 @@ duplicar), baixa o WebView2 se faltar e, na desinstalação, tira a regra, o
 - **Config e log em `%APPDATA%\COM Radio`** no app instalado, porque
   Arquivos de Programas não aceita escrita. Na primeira abertura o config vem
   de um `config.json` ao lado do .exe (o zip antigo), ou do padrão empacotado.
+- **Atualização pelo app.** `find_update` lê as releases do GitHub
+  (pré-releases contam) ao abrir o app instalado e no botão Procurar, e pega a
+  maior versão acima de `VERSION` com um `COM-Radio-Setup-*.exe` anexado.
+  Instalar baixa para `%TEMP%`, confere o sha256 que o GitHub publica no
+  `digest` do anexo, e roda o instalador com `/SILENT` por um `cmd` que
+  espera 3 s: o `AppMutex` faz o instalador recusar com o app aberto, então o
+  app sai antes (pelo caminho normal, que solta a tecla). Recusa com PTT
+  apertado. O `[Run]` do instalador não tem `skipifsilent` para o app
+  reabrir no fim. Testado: busca, versão, hash e a tela; a troca de versão de
+  ponta a ponta só dá para ver quando existir uma release acima da instalada.
 - A versão mora em dois lugares: `VERSION` no `gui.py` e `AppVersion` no
   `installer.iss`. Mudou uma, muda a outra.
 - Depois de mudar qualquer arquivo, rode o `build.bat` de novo.
@@ -434,4 +444,5 @@ mudou um, muda o outro. Os prints em `docs/` saem da interface com
 `--fake-sim` (o do PC com `py app/gui.py --fake-sim`). O `config.json` do
 repositório tem os padrões públicos (`ptt_key` em `leftctrl`) e vai empacotado
 como padrão; o do usuário mora em `%APPDATA%\COM Radio`. A release leva o
-`COM-Radio-Setup-<versão>.exe`.
+`COM-Radio-Setup-<versão>.exe` com esse nome: é por ele que o app acha a
+atualização.

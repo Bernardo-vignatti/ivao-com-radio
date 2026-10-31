@@ -108,6 +108,13 @@ nav button.on::before {
 }
 
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+.update-pill {
+  font: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 9px 12px; border-radius: 12px; cursor: pointer;
+  color: var(--amber); background: rgba(255, 165, 36, 0.1);
+  border: 1px solid rgba(255, 165, 36, 0.35);
+}
+.update-pill:hover { background: rgba(255, 165, 36, 0.18); }
 .side-status {
   display: flex;
   align-items: center;
@@ -513,7 +520,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
-.qr svg { width: 100%; height: 100%; display: block; }
+.qr svg { width: 100%; height: 100%; display: block; stroke: none; }
 .qr-card .card-title { display: block; margin-bottom: 8px; }
 .url { font-size: 17px; color: var(--amber); margin-bottom: 12px; user-select: text; }
 
@@ -523,6 +530,7 @@ input[type="range"]::-webkit-slider-thumb {
 .about-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .about-text b { font-size: 16px; }
 .about-text b .mono { color: var(--amber); font-weight: 400; font-size: 13px; margin-left: 6px; }
+.about + .about { margin-top: 16px; }
 .about-text small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------------------------------------------------------- aviso */

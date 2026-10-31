@@ -7,7 +7,7 @@
 
 #define AppName "COM Radio"
 ; a mesma versao de VERSION em app/gui.py
-#define AppVersion "2.0.0"
+#define AppVersion "2.1.0"
 #define AppExe "COM Radio.exe"
 
 [Setup]
@@ -54,7 +54,9 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 ; apaga antes de criar, para reinstalar nao duplicar a regra
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#AppName}"""; Flags: runhidden
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""{#AppName}"" dir=in action=allow program=""{app}\{#AppExe}"" enable=yes profile=private"; Flags: runhidden; StatusMsg: "Liberando o COM Radio no firewall do Windows..."
-Filename: "{app}\{#AppExe}"; Description: "Abrir o COM Radio"; Flags: nowait postinstall skipifsilent
+; sem skipifsilent: a atualizacao pelo app roda o instalador com /SILENT e
+; o app precisa reabrir sozinho no fim. postinstall roda como o usuario, nao admin
+Filename: "{app}\{#AppExe}"; Description: "Abrir o COM Radio"; Flags: nowait postinstall
 
 [UninstallRun]
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""{#AppName}"""; Flags: runhidden; RunOnceId: "firewall"

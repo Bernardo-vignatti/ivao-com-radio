@@ -40,6 +40,7 @@
   </nav>
 
   <div class="side-foot">
+    <button class="update-pill" id="update-pill" data-goto="config" hidden>Nova versão <span class="mono" id="update-pill-v"></span></button>
     <div class="side-status"><span class="lamp" id="side-lamp"></span><span id="side-text">iniciando…</span></div>
     <button class="btn ghost small" id="quit">Sair do COM Radio</button>
   </div>
@@ -294,6 +295,14 @@
         <small>Portas: rádio <span class="mono" id="port"></span>, instalação <span class="mono" id="setup-port"></span></small>
       </div>
       <button class="btn" id="open-data">Abrir pasta de dados</button>
+    </div>
+
+    <div class="card about">
+      <div class="about-text">
+        <b>Atualização</b>
+        <small id="update-text">—</small>
+      </div>
+      <button class="btn" id="update-btn">Procurar atualização</button>
     </div>
   </section>
 </main>

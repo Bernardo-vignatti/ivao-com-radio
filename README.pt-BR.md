@@ -48,6 +48,8 @@ O áudio e o microfone continuam no PC. O celular é só o painel.
   parte, um gráfico do áudio ao vivo para ajustar o squelch, a tecla de PTT e
   todas as configurações. Fechar a janela deixa o COM rodando na bandeja; para
   sair, use o menu da bandeja.
+- **Atualiza sozinho.** Quando sai uma versão nova no GitHub, a janela avisa;
+  um clique baixa, confere, instala e reabre o COM.
 
 ## Como funciona
 
