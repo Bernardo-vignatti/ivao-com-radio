@@ -64,21 +64,25 @@ class WhazzupFeed:
     def _parse(payload: dict) -> list[dict]:
         out = []
         for atc in payload.get("clients", {}).get("atcs", []) or []:
-            session = atc.get("atcSession") or {}
-            track = atc.get("lastTrack") or {}
-            freq = session.get("frequency")
-            lat, lon = track.get("latitude"), track.get("longitude")
-            callsign = atc.get("callsign")
-            if not callsign or freq is None or lat is None or lon is None:
+            # uma estacao mal formada nao derruba a lista inteira
+            try:
+                session = atc.get("atcSession") or {}
+                track = atc.get("lastTrack") or {}
+                callsign = str(atc["callsign"])
+                freq = round(float(session["frequency"]), 3)
+                lat, lon = float(track["latitude"]), float(track["longitude"])
+            except (AttributeError, KeyError, TypeError, ValueError):
+                continue
+            if not callsign or not all(map(math.isfinite, (freq, lat, lon))):
                 continue
             suffix = callsign.rsplit("_", 1)[-1].upper()
             out.append(
                 {
                     "callsign": callsign,
-                    "frequency": round(float(freq), 3),
-                    "lat": float(lat),
-                    "lon": float(lon),
-                    "role": POSITION_LABEL.get(suffix, session.get("position") or ""),
+                    "frequency": freq,
+                    "lat": lat,
+                    "lon": lon,
+                    "role": POSITION_LABEL.get(suffix, str(session.get("position") or "")),
                 }
             )
         return out

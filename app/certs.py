@@ -32,6 +32,7 @@ CA_NAME = "COM Radio CA"
 # instalada a mao. 397 fica longe do limite e renova sozinho
 LEAF_DAYS = 397
 RENEW_BEFORE = dt.timedelta(days=30)
+PRIVATE_NETS = ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "127.0.0.0/8")
 
 
 def hostname() -> str:
@@ -87,6 +88,17 @@ def _ensure_ca(folder: Path) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
             critical=True,
         )
         .add_extension(ski, critical=False)
+        # a CA so vale para a rede local. Se a ca.key vazar, nao da para
+        # assinar um site de verdade que o iPhone aceite. CAs criadas antes
+        # disto continuam valendo, sem a restricao
+        .add_extension(
+            x509.NameConstraints(
+                permitted_subtrees=[x509.DNSName("local"), x509.DNSName("localhost")]
+                + [x509.IPAddress(ipaddress.ip_network(n)) for n in PRIVATE_NETS],
+                excluded_subtrees=None,
+            ),
+            critical=True,
+        )
         .sign(ca_key, hashes.SHA256())
     )
     _write_key(key, ca_key)
@@ -94,9 +106,10 @@ def _ensure_ca(folder: Path) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
     return cert, ca_key
 
 
-def _names(ip: str) -> tuple[list[str], list[str]]:
-    host = hostname()
-    dns = sorted({host, host + ".local", "localhost"})
+def names(ip: str) -> tuple[list[str], list[str]]:
+    # so o .local: o nome curto nao resolve no iPhone, e a restricao de
+    # nomes da CA so permite .local e localhost
+    dns = sorted({hostname() + ".local", "localhost"})
     ips = sorted({ip, "127.0.0.1"})
     return dns, ips
 
@@ -121,7 +134,7 @@ def ensure(folder: Path, ip: str) -> tuple[Path, Path]:
     folder.mkdir(parents=True, exist_ok=True)
     ca_cert, ca_key = _ensure_ca(folder)
     crt, key = folder / "server.crt", folder / "server.key"
-    dns, ips = _names(ip)
+    dns, ips = names(ip)
     if _leaf_ok(crt, dns, ips) and key.exists():
         return crt, key
 
@@ -211,4 +224,5 @@ if __name__ == "__main__":
         leaf = x509.load_pem_x509_certificate(crt.read_bytes())
         ca_cert = x509.load_pem_x509_certificate(ca_before)
         leaf.verify_directly_issued_by(ca_cert)
+        assert ca_cert.extensions.get_extension_for_class(x509.NameConstraints).critical
         print("ok")

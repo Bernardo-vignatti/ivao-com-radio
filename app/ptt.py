@@ -313,7 +313,10 @@ class PttKey:
         with self._lock:
             if not self._down:
                 return False
-            self._send(keyup=True)
+            # se o Windows recusar o keyup, a tecla continua apertada de
+            # verdade: fica marcada assim para o guard do servidor tentar de novo
+            if not self._send(keyup=True):
+                return False
             self._down = False
             log.info("PTT up (%s)", self.name)
             return True

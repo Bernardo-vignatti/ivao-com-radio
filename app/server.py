@@ -23,6 +23,7 @@ import socket
 import sys
 import time
 from contextlib import asynccontextmanager
+from urllib.parse import urlsplit
 from pathlib import Path
 
 import uvicorn
@@ -73,6 +74,11 @@ PORT = int(CFG.get("port", 8443))
 SETUP_PORT = int(CFG.get("setup_port", 8080))
 
 MIN_FREQ, MAX_FREQ = 118.0, 136.975
+# quanto um celular travado pode segurar o envio antes de ser derrubado
+SEND_TIMEOUT = 1.0
+# nomes pelos quais a pagina do radio pode abrir o WebSocket. Preenchido no
+# make_server com os mesmos nomes do certificado
+ORIGINS: set[str] = set()
 
 
 def lan_ip() -> str:
@@ -136,6 +142,12 @@ class Hub:
             self.key.force_release("sem heartbeat do celular")
             self.holder = None
 
+    def check_stuck(self) -> None:
+        """Tecla apertada sem ninguem segurando: um release que falhou no
+        SendInput. Tenta de novo a cada volta ate o Windows aceitar."""
+        if self.holder is None and self.key.is_down:
+            self.key.force_release("tecla sem dono")
+
     async def broadcast(self, payload: dict) -> None:
         if not self.clients:
             return
@@ -143,11 +155,17 @@ class Hub:
         dead = []
         for ws in list(self.clients):
             try:
-                await ws.send_text(text)
+                # celular que sumiu sem fechar a conexao enche o buffer e o
+                # send fica esperando: sem limite, travaria o envio de todos
+                await asyncio.wait_for(ws.send_text(text), SEND_TIMEOUT)
             except Exception:
                 dead.append(ws)
         for ws in dead:
             self.disconnect(ws)
+            try:
+                await ws.close()
+            except Exception:
+                pass
 
 
 # ------------------------------------------------------------------- estado
@@ -237,10 +255,30 @@ def build_state() -> dict:
     }
 
 
+async def guard(stop: asyncio.Event) -> None:
+    """Dead-man switch num laco proprio, que nao espera rede nenhuma.
+
+    Separado do pump: um envio lento ou um erro montando o estado nao podem
+    atrasar a soltura da tecla.
+    """
+    while not stop.is_set():
+        try:
+            HUB.check_deadman()
+            HUB.check_stuck()
+        except Exception:
+            log.exception("erro no dead-man switch")
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=0.05)
+        except asyncio.TimeoutError:
+            pass
+
+
 async def pump(stop: asyncio.Event) -> None:
     while not stop.is_set():
-        HUB.check_deadman()
-        await HUB.broadcast(build_state())
+        try:
+            await HUB.broadcast(build_state())
+        except Exception:
+            log.exception("erro montando o estado")
         try:
             await asyncio.wait_for(stop.wait(), timeout=0.1)
         except asyncio.TimeoutError:
@@ -256,7 +294,7 @@ async def lifespan(app: FastAPI):
     # Altitude aberto, isso e uma transmissao curta na frequencia. Para testar
     # use 'py app/server.py --test-ptt' antes de entrar na rede.
     log.info("PTT na tecla '%s'", KEY.name)
-    tasks = [asyncio.create_task(pump(stop))]
+    tasks = [asyncio.create_task(guard(stop)), asyncio.create_task(pump(stop))]
     if CFG.get("whazzup_enabled", True):
         tasks.append(asyncio.create_task(FEED.run(stop)))
     log.info("radio em https://%s.local:%s", certs.hostname(), PORT)
@@ -313,8 +351,28 @@ def handle(ws: WebSocket, msg: dict) -> dict | None:
     return None
 
 
+def origin_ok(origin: str | None) -> bool:
+    """So a pagina do radio abre o WebSocket.
+
+    Sem isto qualquer site aberto no Safari do iPhone, que confia na CA,
+    poderia conectar no PC e apertar o PTT. Cliente sem Origin nao e
+    navegador (os testes, por exemplo): site nenhum consegue omitir o Origin.
+    """
+    if origin is None:
+        return True
+    try:
+        u = urlsplit(origin)
+        return u.scheme == "https" and u.port == PORT and (u.hostname or "") in ORIGINS
+    except ValueError:
+        return False
+
+
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
+    if not origin_ok(ws.headers.get("origin")):
+        log.warning("WebSocket recusado da origem %s", ws.headers.get("origin"))
+        await ws.close(code=1008)
+        return
     await HUB.connect(ws)
     try:
         await ws.send_text(json.dumps(build_state()))
@@ -508,11 +566,17 @@ def make_server() -> uvicorn.Server:
     Quem chama decide onde rodar: no terminal roda na thread principal, na
     janela do .exe roda numa thread e para com should_exit.
     """
-    crt, key = certs.ensure(CERTS, lan_ip())
+    ip = lan_ip()
+    crt, key = certs.ensure(CERTS, ip)
+    dns, ips = certs.names(ip)
+    ORIGINS.clear()
+    ORIGINS.update(n.lower() for n in dns + ips)
     certs.serve_setup(SETUP_PORT, ROOT / "static" / "setup.html", CERTS / "ca.crt", PORT)
     return uvicorn.Server(
         uvicorn.Config(
             app, host="0.0.0.0", port=PORT, log_level="warning",
+            # o celular so manda eventos de poucos bytes
+            ws_max_size=4096,
             ssl_certfile=str(crt), ssl_keyfile=str(key),
         )
     )

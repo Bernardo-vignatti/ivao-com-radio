@@ -24,7 +24,7 @@ import time
 import winreg
 from pathlib import Path
 
-VERSION = "2.1.0"  # o instalador tem a sua copia em installer.iss
+VERSION = "2.1.1"  # o instalador tem a sua copia em installer.iss
 APP = "COM Radio"
 FROZEN = getattr(sys, "frozen", False)
 DATA = Path(os.environ.get("APPDATA", Path.home())) / APP
@@ -278,6 +278,9 @@ class Api:
                 value = bool(value)
             elif key == "audio_process":
                 value = [str(v).strip().lower() for v in value if str(v).strip()]
+                # aspas e colchetes quebrariam a troca de valor do save_config
+                if any(set(v) & set('"[]\\') for v in value):
+                    return {"error": "use só letras, números e espaços"}
                 if not value:
                     return {"error": "informe ao menos um pedaço do caminho do IVAO"}
             elif key == "autostart":
@@ -363,7 +366,10 @@ class Api:
         self._update = dict(u, state="downloading", done=0)
 
         def run():
-            destino = Path(tempfile.gettempdir()) / u["name"]
+            # pasta nova e nome fixo: o nome vem do GitHub e iria parar numa
+            # linha do cmd, e uma pasta so nossa evita trocarem o arquivo
+            # entre a conferencia do hash e a execucao
+            destino = Path(tempfile.mkdtemp(prefix="com-radio-")) / "COM-Radio-Setup.exe"
             try:
                 h = hashlib.sha256()
                 with httpx.stream("GET", u["url"], timeout=30.0, follow_redirects=True) as r,                         open(destino, "wb") as f:
@@ -372,7 +378,9 @@ class Api:
                         f.write(bloco)
                         h.update(bloco)
                         self._update["done"] = self._update.get("done", 0) + len(bloco)
-                if u.get("sha256") and h.hexdigest() != u["sha256"].lower():
+                if not u.get("sha256"):
+                    raise ValueError("o GitHub não publicou o hash do instalador")
+                if h.hexdigest() != u["sha256"].lower():
                     raise ValueError("o arquivo baixado não confere com o do GitHub")
             except Exception as exc:
                 print("atualizacao: %s" % exc)

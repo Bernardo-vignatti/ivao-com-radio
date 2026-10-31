@@ -172,6 +172,13 @@ uma vez, sem mkcert, com o pacote `cryptography`.
 - **Os certificados moram em `%APPDATA%\COM Radio\certs`**, não na pasta do
   projeto: o .exe e o `py app/server.py` precisam da mesma CA. A `ca.key` nunca
   vai para o git nem para o celular.
+- **A CA só vale para a rede local (revisão de out/2026).** Ela tem
+  `NameConstraints` crítico: só `.local`, `localhost` e IPs privados. Se a
+  `ca.key` vazar, ninguém assina um site de verdade que o iPhone aceite
+  (testado: o OpenSSL recusa `www.google.com` assinado por ela). Por isso o
+  certificado do servidor perdeu o nome curto do PC, que ficaria fora da
+  restrição. CAs criadas antes continuam valendo, sem a restrição; para ganhar
+  a restrição, apague a pasta `certs` e instale de novo no iPhone.
 - **Nome antes do IP.** O certificado vale para `<nome-do-pc>.local` e para o IP.
   A página de instalação testa os dois de verdade pelo iPhone e manda
   instalar pelo nome se ele resolver, porque o app salvo pelo nome sobrevive
@@ -236,8 +243,9 @@ duplicar), baixa o WebView2 se faltar e, na desinstalação, tira a regra, o
 - **Atualização pelo app.** `find_update` lê as releases do GitHub
   (pré-releases contam) ao abrir o app instalado e no botão Procurar, e pega a
   maior versão acima de `VERSION` com um `COM-Radio-Setup-*.exe` anexado.
-  Instalar baixa para `%TEMP%`, confere o sha256 que o GitHub publica no
-  `digest` do anexo, e roda o instalador com `/SILENT` por um `cmd` que
+  Instalar baixa para uma pasta nova em `%TEMP%`, com nome fixo (o nome do
+  GitHub iria parar numa linha do `cmd`), exige e confere o sha256 que o
+  GitHub publica no `digest` do anexo, e roda o instalador com `/SILENT` por um `cmd` que
   espera 3 s: o `AppMutex` faz o instalador recusar com o app aberto, então o
   app sai antes (pelo caminho normal, que solta a tecla). Recusa com PTT
   apertado. O `[Run]` do instalador não tem `skipifsilent` para o app
@@ -254,6 +262,26 @@ frequência para todos na rede. A tecla também é liberada em
 `visibilitychange`, `blur`, `pagehide`, no disconnect e no shutdown. **Essa é
 a parte crítica do projeto — qualquer refatoração precisa preservar os cinco
 caminhos.** Só o primeiro cliente a apertar controla o PTT até soltar.
+
+Da revisão de out/2026, que endureceu esse caminho:
+
+- **O dead-man roda no `guard`, separado do `pump`**, a cada 50 ms. Antes
+  ele morava no laço do envio: um celular que sumia sem fechar a conexão
+  podia prender o `send_text`, e um erro montando o estado matava a tarefa
+  e o dead-man junto. Agora cada envio tem 1 s (`SEND_TIMEOUT`) e os dois
+  laços pegam exceção sem morrer.
+- **Release que falha não marca a tecla solta.** Se o `SendInput` recusa o
+  keyup, `is_down` fica verdadeiro e o `guard` (`check_stuck`) tenta de novo
+  até o Windows aceitar.
+- **O WebSocket confere o `Origin`**: só a página do rádio (`https`, a porta
+  certa, um nome do certificado). Sem isso, qualquer site aberto no Safari
+  do iPhone, que confia na CA, poderia apertar o PTT. Cliente sem `Origin`
+  passa: navegador sempre manda, e os testes não. Mensagens acima de 4 KB
+  derrubam a conexão (`ws_max_size`).
+
+Testado contra o servidor: origem de outro site recusada; celular travado sem
+ler nada por 12 s enquanto outro transmitia, com o estado chegando e o
+dead-man soltando em 0,5 s; release falho solto na volta seguinte.
 
 ## Protocolo do WebSocket
 

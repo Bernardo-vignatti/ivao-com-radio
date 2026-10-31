@@ -16,6 +16,7 @@ variavel ja com o indice fixo, e reusamos os mesmos objetos.
 
 import ctypes
 import logging
+import math
 import threading
 import time
 
@@ -169,9 +170,14 @@ class SimBridge:
         for key in FREQ_KEYS:
             value = self._req[key].value
             snapshot[key] = self._clean_freq(value)
-        for key in ("lat", "lon"):
-            value = self._req[key].value
-            snapshot[key] = float(value) if value is not None else None
+        for key, lim in (("lat", 90.0), ("lon", 180.0)):
+            try:
+                value = float(self._req[key].value)
+            except (TypeError, ValueError):
+                value = None
+            # NaN ou lixo quebraria a conta de distancia da lista de ATC
+            ok = value is not None and math.isfinite(value) and abs(value) <= lim
+            snapshot[key] = value if ok else None
         raw = self._req["callsign"].value
         if isinstance(raw, bytes):
             raw = raw.decode("ascii", "ignore")

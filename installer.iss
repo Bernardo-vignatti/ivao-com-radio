@@ -7,7 +7,7 @@
 
 #define AppName "COM Radio"
 ; a mesma versao de VERSION em app/gui.py
-#define AppVersion "2.1.0"
+#define AppVersion "2.1.1"
 #define AppExe "COM Radio.exe"
 
 [Setup]
